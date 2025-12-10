@@ -25,11 +25,20 @@ export default function UploadPage() {
                 method: "POST",
                 body: formData,
             });
-            const data = await res.json();
+
+            let data;
+            const contentType = res.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+                data = await res.json();
+            } else {
+                const text = await res.text();
+                throw new Error(`Server returned non-JSON response: ${text.slice(0, 100)}...`);
+            }
+
             if (res.ok) {
                 setStatus(`Success: ${data.filename} uploaded. Total samples: ${data.samples}`);
             } else {
-                setStatus(`Error: ${data.detail}`);
+                setStatus(`Error: ${data.detail || JSON.stringify(data)}`);
             }
         } catch (err) {
             setStatus(`Error: ${err}`);
