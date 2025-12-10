@@ -7,7 +7,7 @@ import shutil
 import os
 import numpy as np
 
-app = FastAPI(title="Fivedreg API")
+app = FastAPI(title="Fivedreg API", root_path="/api")
 
 # Allow CORS for frontend
 app.add_middleware(
