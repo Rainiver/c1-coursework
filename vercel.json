@@ -3,21 +3,22 @@
     "builds": [
         {
             "src": "api/index.py",
-            "use": "@vercel/python"
+            "use": "@vercel/python",
+            "config": {
+                "includeFiles": [
+                    "../backend/**"
+                ]
+            }
         },
         {
             "src": "frontend/package.json",
             "use": "@vercel/next"
         }
     ],
-    "routes": [
+    "rewrites": [
         {
-            "src": "/api/(.*)",
-            "dest": "/api/index.py"
-        },
-        {
-            "src": "/(.*)",
-            "dest": "/frontend/$1"
+            "source": "/api/(.*)",
+            "destination": "/api/index.py"
         }
     ]
 }
