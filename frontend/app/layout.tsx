@@ -16,8 +16,7 @@ export default function RootLayout({
       <body>
         <nav style={{ padding: "1rem", backgroundColor: "#333", color: "white", marginBottom: "2rem" }}>
           <ul style={{ display: "flex", gap: "2rem", listStyle: "none", margin: 0, padding: 0 }}>
-            <li><Link href="/" style={{ color: "white", textDecoration: "none", fontWeight: "bold" }}>Home</Link></li>
-            <li><Link href="/upload" style={{ color: "white", textDecoration: "none" }}>Upload</Link></li>
+            <li><Link href="/upload" style={{ color: "white", textDecoration: "none", fontWeight: "bold" }}>Upload</Link></li>
             <li><Link href="/train" style={{ color: "white", textDecoration: "none" }}>Train</Link></li>
             <li><Link href="/predict" style={{ color: "white", textDecoration: "none" }}>Predict</Link></li>
           </ul>

@@ -1,9 +1,9 @@
 import time
 import numpy as np
-import torch
 import psutil
 import os
 import sys
+import json
 from fivedreg.model import ModelHandler
 from fivedreg.data import DataHandler
 
@@ -43,7 +43,25 @@ def profile():
         mse = np.mean((preds - y)**2)
         r2 = 1 - (np.sum((y - preds)**2) / np.sum((y - np.mean(y))**2))
         
+        result = {
+            "size": size,
+            "training_time": float(train_time),
+            "memory_mb": float(mem_diff),
+            "mse": float(mse),
+            "r2": float(r2)
+        }
+        results.append(result)
+        
         print(f"{size:<10} | {train_time:<10.4f} | {mem_diff:<12.2f} | {mse:<10.4f} | {r2:<10.4f}")
+    
+    # Save results to JSON
+    output_file = "performance_results.json"
+    with open(output_file, "w") as f:
+        json.dump(results, f, indent=2)
+    print(f"\nResults saved to {output_file}")
+    
+    return results
         
 if __name__ == "__main__":
     profile()
+

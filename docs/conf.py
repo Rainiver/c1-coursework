@@ -3,7 +3,7 @@ import sys
 sys.path.insert(0, os.path.abspath('../backend'))
 
 project = 'Fivedreg Interpolator'
-copyright = '2025, University of Cambridge'
+copyright = '2025, Research Computing'
 author = 'Your Name'
 release = '0.1.0'
 

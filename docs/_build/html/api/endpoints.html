@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>REST API Endpoints &#8212; Fivedreg Interpolator 0.1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=12dfc556" />
+    <script src="../_static/documentation_options.js?v=01f34227"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="rest-api-endpoints">
+<h1>REST API Endpoints<a class="headerlink" href="#rest-api-endpoints" title="Link to this heading">¶</a></h1>
+<p>The FastAPI backend exposes the following endpoints for web interface interaction.</p>
+<section id="health-check">
+<h2>Health Check<a class="headerlink" href="#health-check" title="Link to this heading">¶</a></h2>
+<p><strong>GET</strong> <code class="docutils literal notranslate"><span class="pre">/health</span></code> or <code class="docutils literal notranslate"><span class="pre">/api/health</span></code></p>
+<p>Check if the API server is running.</p>
+<p><strong>Response</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;ok&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="upload-dataset">
+<h2>Upload Dataset<a class="headerlink" href="#upload-dataset" title="Link to this heading">¶</a></h2>
+<p><strong>POST</strong> <code class="docutils literal notranslate"><span class="pre">/upload</span></code> or <code class="docutils literal notranslate"><span class="pre">/api/upload</span></code></p>
+<p>Upload a .pkl file containing the 5D dataset.</p>
+<p><strong>Request:</strong>
+- Content-Type: <code class="docutils literal notranslate"><span class="pre">multipart/form-data</span></code>
+- Body: <code class="docutils literal notranslate"><span class="pre">file</span></code> - The .pkl file to upload</p>
+<p><strong>Response</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;filename&quot;</span><span class="p">:</span> <span class="s2">&quot;coursework_dataset.pkl&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;uploaded&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;statistics&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;total_samples&quot;</span><span class="p">:</span> <span class="mi">5000</span><span class="p">,</span>
+    <span class="s2">&quot;n_features&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="s2">&quot;missing_values&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s2">&quot;X&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+      <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="mi">0</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;target_distribution&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="mf">0.1234</span><span class="p">,</span>
+      <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="mf">9.8765</span><span class="p">,</span>
+      <span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="mf">5.0123</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;planned_split&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s2">&quot;train&quot;</span><span class="p">:</span> <span class="mi">3000</span><span class="p">,</span>
+      <span class="s2">&quot;validation&quot;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span>
+      <span class="s2">&quot;test&quot;</span><span class="p">:</span> <span class="mi">1000</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><strong>Error Responses:</strong>
+- 400: Invalid file format or failed to load dataset</p>
+</section>
+<section id="train-model">
+<h2>Train Model<a class="headerlink" href="#train-model" title="Link to this heading">¶</a></h2>
+<p><strong>POST</strong> <code class="docutils literal notranslate"><span class="pre">/train</span></code> or <code class="docutils literal notranslate"><span class="pre">/api/train</span></code></p>
+<p>Train the neural network interpolator on the uploaded dataset.</p>
+<p><strong>Request:</strong>
+- Content-Type: <code class="docutils literal notranslate"><span class="pre">application/json</span></code>
+- Body:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;hidden_layers&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">64</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">16</span><span class="p">],</span>
+  <span class="s2">&quot;learning_rate&quot;</span><span class="p">:</span> <span class="mf">0.001</span><span class="p">,</span>
+  <span class="s2">&quot;max_epochs&quot;</span><span class="p">:</span> <span class="mi">100</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><strong>Response</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;training_complete&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;metrics&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;training_time&quot;</span><span class="p">:</span> <span class="mf">0.1420</span><span class="p">,</span>
+    <span class="s2">&quot;final_loss&quot;</span><span class="p">:</span> <span class="mf">0.0012</span><span class="p">,</span>
+    <span class="s2">&quot;val_mse&quot;</span><span class="p">:</span> <span class="mf">0.0108</span><span class="p">,</span>
+    <span class="s2">&quot;val_r2&quot;</span><span class="p">:</span> <span class="mf">0.9745</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><strong>Error Responses:</strong>
+- 400: No dataset loaded (must upload first)
+- 500: Training failed</p>
+</section>
+<section id="make-prediction">
+<h2>Make Prediction<a class="headerlink" href="#make-prediction" title="Link to this heading">¶</a></h2>
+<p><strong>POST</strong> <code class="docutils literal notranslate"><span class="pre">/predict</span></code> or <code class="docutils literal notranslate"><span class="pre">/api/predict</span></code></p>
+<p>Make a prediction using the trained model.</p>
+<p><strong>Request:</strong>
+- Content-Type: <code class="docutils literal notranslate"><span class="pre">application/json</span></code>
+- Body:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;features&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><strong>Response</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;prediction&quot;</span><span class="p">:</span> <span class="mf">2.456</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><strong>Error Responses:</strong>
+- 400: Model not trained or invalid input (must have exactly 5 features)
+- 500: Prediction failed</p>
+</section>
+<section id="interactive-api-documentation">
+<h2>Interactive API Documentation<a class="headerlink" href="#interactive-api-documentation" title="Link to this heading">¶</a></h2>
+<p>When running locally, FastAPI provides interactive documentation:</p>
+<ul class="simple">
+<li><p><strong>Swagger UI</strong>: <a class="reference external" href="http://localhost:8000/docs">http://localhost:8000/docs</a></p></li>
+<li><p><strong>ReDoc</strong>: <a class="reference external" href="http://localhost:8000/redoc">http://localhost:8000/redoc</a></p></li>
+</ul>
+<p>These interfaces allow you to:
+- View all endpoints and their schemas
+- Test endpoints directly in the browser
+- See example requests and responses</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Fivedreg Interpolator</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Getting Started:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">API Reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Performance:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../performance.html">Performances and Profiling</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Testing:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../testing.html">Testing</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Research Computing.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../_sources/api/endpoints.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

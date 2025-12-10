@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Quick Start Guide &#8212; Fivedreg Interpolator 0.1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
+    <script src="_static/documentation_options.js?v=01f34227"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Usage Guide" href="usage.html" />
+    <link rel="prev" title="Installation Guide" href="installation.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="quick-start-guide">
+<h1>Quick Start Guide<a class="headerlink" href="#quick-start-guide" title="Link to this heading">¶</a></h1>
+<p>This guide will get you up and running with the Fivedreg Interpolator in 5 minutes.</p>
+<section id="step-1-launch-the-application">
+<h2>Step 1: Launch the Application<a class="headerlink" href="#step-1-launch-the-application" title="Link to this heading">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">./</span><span class="n">run_local</span><span class="o">.</span><span class="n">sh</span>
+</pre></div>
+</div>
+<p>Wait for both frontend and backend to start. You should see:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Backend</span><span class="p">:</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">localhost</span><span class="p">:</span><span class="mi">8000</span><span class="o">/</span><span class="n">docs</span>
+<span class="n">Frontend</span><span class="p">:</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">localhost</span><span class="p">:</span><span class="mi">3000</span>
+</pre></div>
+</div>
+</section>
+<section id="step-2-upload-dataset">
+<h2>Step 2: Upload Dataset<a class="headerlink" href="#step-2-upload-dataset" title="Link to this heading">¶</a></h2>
+<ol class="arabic simple">
+<li><p>Open <a class="reference external" href="http://localhost:3000">http://localhost:3000</a> in your browser</p></li>
+<li><p>Click on <strong>Upload</strong> in the navigation</p></li>
+<li><p>Click <strong>Choose File</strong> and select <code class="docutils literal notranslate"><span class="pre">coursework_dataset.pkl</span></code></p></li>
+<li><p>Click <strong>Upload</strong></p></li>
+</ol>
+<p>You should see dataset statistics including:
+- Total samples (5,000)
+- Number of features (5)
+- Missing values check
+- Target distribution (min, max, mean)
+- Planned train/val/test split</p>
+</section>
+<section id="step-3-train-the-model">
+<h2>Step 3: Train the Model<a class="headerlink" href="#step-3-train-the-model" title="Link to this heading">¶</a></h2>
+<ol class="arabic simple">
+<li><p>Navigate to the <strong>Train</strong> page</p></li>
+<li><p>Configure hyperparameters (or use defaults):</p>
+<ul class="simple">
+<li><p>Hidden Layers: <code class="docutils literal notranslate"><span class="pre">64,32,16</span></code></p></li>
+<li><p>Learning Rate: <code class="docutils literal notranslate"><span class="pre">0.001</span></code></p></li>
+<li><p>Max Epochs: <code class="docutils literal notranslate"><span class="pre">100</span></code></p></li>
+</ul>
+</li>
+<li><p>Click <strong>Start Training</strong></p></li>
+<li><p>Wait for training to complete (~10-30 seconds for 5K samples)</p></li>
+</ol>
+<p>Training results will display:
+- Training time
+- Final loss
+- Validation MSE
+- Validation R² score</p>
+</section>
+<section id="step-4-make-predictions">
+<h2>Step 4: Make Predictions<a class="headerlink" href="#step-4-make-predictions" title="Link to this heading">¶</a></h2>
+<ol class="arabic simple">
+<li><p>Navigate to the <strong>Predict</strong> page</p></li>
+<li><p>Enter 5 feature values (e.g., <code class="docutils literal notranslate"><span class="pre">0.5,</span> <span class="pre">0.3,</span> <span class="pre">0.7,</span> <span class="pre">0.2,</span> <span class="pre">0.9</span></code>)</p></li>
+<li><p>Click <strong>Predict</strong></p></li>
+<li><p>See the predicted target value</p></li>
+</ol>
+</section>
+<section id="example-workflow">
+<h2>Example Workflow<a class="headerlink" href="#example-workflow" title="Link to this heading">¶</a></h2>
+<p>Complete workflow example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># 1. Start services</span>
+<span class="o">./</span><span class="n">run_local</span><span class="o">.</span><span class="n">sh</span>
+
+<span class="c1"># 2. In browser: Upload coursework_dataset.pkl</span>
+<span class="c1"># 3. In browser: Train with default settings</span>
+<span class="c1"># 4. In browser: Predict with inputs [0.5, 0.5, 0.5, 0.5, 0.5]</span>
+</pre></div>
+</div>
+</section>
+<section id="next-steps">
+<h2>Next Steps<a class="headerlink" href="#next-steps" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Read the <a class="reference internal" href="usage.html"><span class="doc">Usage Guide</span></a> guide for advanced features</p></li>
+<li><p>Explore the <a class="reference internal" href="api/index.html"><span class="doc">API Reference</span></a> reference for programmatic access</p></li>
+<li><p>Check <a class="reference internal" href="performance.html"><span class="doc">Performances and Profiling</span></a> for benchmarking results</p></li>
+</ul>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Fivedreg Interpolator</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Getting Started:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation Guide</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Quick Start Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#step-1-launch-the-application">Step 1: Launch the Application</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#step-2-upload-dataset">Step 2: Upload Dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#step-3-train-the-model">Step 3: Train the Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#step-4-make-predictions">Step 4: Make Predictions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-workflow">Example Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">API Reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Performance:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="performance.html">Performances and Profiling</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Testing:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="installation.html" title="previous chapter">Installation Guide</a></li>
+      <li>Next: <a href="usage.html" title="next chapter">Usage Guide</a></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Research Computing.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="_sources/quickstart.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

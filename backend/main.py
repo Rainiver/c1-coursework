@@ -50,12 +50,46 @@ async def upload_dataset(file: UploadFile = File(...)):
         shutil.copyfileobj(file.file, buffer)
         
     try:
-        data_handler.load_dataset(file_path)
-        # Preprocess immediately or wait for train? Let's do a preliminary check.
-        # But we don't split yet until training maybe? 
-        # Requirement says "upload page... including validation and preview". 
-        # So lets just validate load.
-        return {"filename": filename, "status": "uploaded", "samples": data_handler.X.shape[0]}
+        X, y = data_handler.load_dataset(file_path)
+        
+        # Calculate detailed statistics
+        total_samples = X.shape[0]
+        n_features = X.shape[1]
+        
+        # Check for missing values
+        missing_X = int(np.sum(np.isnan(X)))
+        missing_y = int(np.sum(np.isnan(y)))
+        
+        # Get data ranges
+        y_min, y_max, y_mean = float(np.min(y)), float(np.max(y)), float(np.mean(y))
+        
+        # Simulate split sizes (actual split happens during training)
+        train_size = int(total_samples * 0.6)
+        val_size = int(total_samples * 0.2)
+        test_size = total_samples - train_size - val_size
+        
+        return {
+            "filename": filename,
+            "status": "uploaded",
+            "statistics": {
+                "total_samples": total_samples,
+                "n_features": n_features,
+                "missing_values": {
+                    "X": missing_X,
+                    "y": missing_y
+                },
+                "target_distribution": {
+                    "min": y_min,
+                    "max": y_max,
+                    "mean": y_mean
+                },
+                "planned_split": {
+                    "train": train_size,
+                    "validation": val_size,
+                    "test": test_size
+                }
+            }
+        }
     except Exception as e:
         if os.path.exists(file_path):
             os.remove(file_path)
@@ -91,7 +125,7 @@ def train_model(config: TrainConfig):
             "status": "training_complete",
             "metrics": {
                 "training_time": results["training_time"],
-                "final_loss": results["losses"][-1],
+                "final_loss": float(results["losses"][-1]),
                 "val_mse": float(mse),
                 "val_r2": float(r2)
             }
