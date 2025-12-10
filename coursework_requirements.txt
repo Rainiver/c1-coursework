@@ -1,0 +1,100 @@
+MPhil in Data Intensive Science
+Michaelmas Term 2025
+C1 Research Computing Coursework
+B. Bolliet
+Attempt all parts of the coursework. Code is submitted to your individual GitLab repository.
+The repository will be assessed after 17 December 2025.
+Include:
+• Link to your GitLab project repository.
+There are135 marksin total.
+© 2025 University of Cambridge
+DRAFT 2
+2
+Preamble
+Your goal is to build a full-stack, research-grade system capable of learning and serving
+neural-network models that can interpolate any 5-dimensional numerical dataset. A test
+dataset is provided.
+The system must have 6 components:
+1. APython packageimplementing data loading, model training, and inference.
+2. AReadTheDocshtml build (local).
+3. AFastAPI backendexposing REST endpoints for training and prediction.
+4. ANext.js frontendproviding an interactive UI to train and query models.
+5. AGitLabrepository containing all of the above. The commit history should
+reflect your answers to each of the questions (use a different tag for each question).
+6. ADocker-composefile to serve the app in a container.
+Tasks
+1 Create repository structure [5]
+Create a Git repository namedinterpolator with this overall structure (your
+repository will eventually contain more files):
+1 .
+2 |-- backend/
+3 | |-- pyproject.toml
+4 | |-- fivedreg
+5 | |-- main.py
+6 |-- frontend/
+7 |-- package.json
+8 |-- src/app/
+2 Package configuration [5]
+Configure the backend with a validpyproject.toml (PEP 621). Declare
+dependencies (e.g.,numpy, torch,fastapi,uvicorn, etc.).
+3 Data handling [10]
+Implement afivedreg.data module to handle 5D datasets from.pkl format.
+The module should include aload_dataset(filepath) function that reads X (5
+features) and y (target) arrays, validates input dimensions and handles missing values
+appropriately. Implement functionality to split data into train/validation/test sets and
+standardizes features. Your implementation should handle the test dataset provided.
+© 2025 University of Cambridge
+DRAFT 2
+3
+4 Implement model [15]
+Implement a lightweight neural network torch, scikit-learn or tensorflow. The
+model should use small hidden layers (e.g., [64, 32, 16]) and be fully configurable by
+number of layers, neurons per layer, learning rate, and max iterations. Performance is
+critical: the model must train on CPU within less than a minute for datasets up to 10,000
+samples. Ensure the implementation provides a consistentfit(X, y) andpredict(X)
+interface compatible with torch/tensorflow conventions. Your implementation should
+work with the dataset provided.
+5 FastAPI backend [20]
+Create a comprehensive FastAPI backend that handles dataset upload and model
+operations. The API should provide aGET /health endpoint for service health checks,
+aPOST /upload endpoint for uploading 5D datasets in.npz format, and aPOST
+/train endpoint that trains models on uploaded datasets. Additionally, implement a
+POST /predict for making predictions on new 5D input vectors.
+6 Next.js frontend [20]
+Develop a modern, responsive Next.js frontend that provides an intuitive interface
+for the machine learning system. The application should feature four main pages: an
+upload page (/upload) with a file upload interface for.npz datasets including
+validation and preview functionality, a training button (/train) where users can
+configure hyperparameters and start training, a prediction button (/predict) with an
+interactive form containing 5 input fields for making predictions. The result of the
+prediction should display.
+7 Testing and reproducibility [20]
+Create a comprehensive testing suite underbackend/tests/ that validates all
+system components and ensures reliability. Additionally, implement containerization
+usingDockerfile configurations and adocker-compose.yml file that can launch both
+backend and frontend services seamlessly. The implementation should include thorough
+documentationofallenvironmentvariables,usageinstructions,andsetupproceduresina
+detailed README.md file that enables easy deployment and development workflow.
+8 Performance and profiling [20]
+Conduct comprehensive performance analysis and benchmarking of the model to
+understanditscomputationalcharacteristicsandscalability. Thisanalysisshouldmeasure
+training time as a function of dataset size using datasets of 1K, 5K, and 10K samples to
+establish scaling behavior. Additionally, profile memory usage during both training and
+prediction phasesto identifypotential bottlenecks, and compareaccuracy metricssuch as
+MSE and R² scores across different dataset sizes. You should report on your findings in
+the documentation page (next question), in a section called "Performances and profiling".
+© 2025 University of Cambridge
+DRAFT 2 (TURN OVER
+4
+9 Documentation and deployment [20]
+Create comprehensive documentation using Sphinx and establish a complete local
+deployment strategy. The documentation system should use Sphinx to generate HTML
+documentation that includes detailed API reference, user guides, installation instructions,
+andpracticalusageexamples,aswellasadescriptionofthetestsuite. Alldocumentation
+mustbuildlocallyandbeaccessiblethroughstandardwebbrowsersviafile://URLs. You
+should provide a shell script to build the documentation. Provide a separate shell script
+that successfully launches the entire technology stack locally. User should be able to
+upload the dataset provided.
+END OF PAPER
+© 2025 University of Cambridge
+DRAFT 2
