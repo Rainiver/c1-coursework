@@ -7,7 +7,7 @@ import shutil
 import os
 import numpy as np
 
-app = FastAPI(title="Fivedreg API", root_path="/api")
+app = FastAPI(title="Fivedreg API")
 
 # Allow CORS for frontend
 app.add_middleware(
@@ -34,10 +34,12 @@ class PredictInput(BaseModel):
     features: list[float]
 
 @app.get("/health")
+@app.get("/api/health")
 def health_check():
     return {"status": "ok"}
 
 @app.post("/upload")
+@app.post("/api/upload")
 async def upload_dataset(file: UploadFile = File(...)):
     filename = file.filename
     if not (filename.endswith(".pkl") or filename.endswith(".npz")):
@@ -55,10 +57,12 @@ async def upload_dataset(file: UploadFile = File(...)):
         # So lets just validate load.
         return {"filename": filename, "status": "uploaded", "samples": data_handler.X.shape[0]}
     except Exception as e:
-        os.remove(file_path)
+        if os.path.exists(file_path):
+            os.remove(file_path)
         raise HTTPException(status_code=400, detail=f"Failed to load dataset: {str(e)}")
 
 @app.post("/train")
+@app.post("/api/train")
 def train_model(config: TrainConfig):
     if data_handler.X is None:
         raise HTTPException(status_code=400, detail="No dataset loaded. Upload first.")
@@ -96,6 +100,7 @@ def train_model(config: TrainConfig):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/predict")
+@app.post("/api/predict")
 def predict(input_data: PredictInput):
     if model_handler.model is None:
         raise HTTPException(status_code=400, detail="Model not trained.")
