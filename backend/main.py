@@ -21,8 +21,9 @@ app.add_middleware(
 # Global instances (in a real app, might use dependency injection or database)
 data_handler = DataHandler()
 model_handler = ModelHandler()
-UPLOAD_DIR = "uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+# In Vercel (serverless), only /tmp is writable
+UPLOAD_DIR = "/tmp"
+# os.makedirs(UPLOAD_DIR, exist_ok=True) # /tmp always exists
 
 class TrainConfig(BaseModel):
     hidden_layers: list[int] = [64, 32, 16]
