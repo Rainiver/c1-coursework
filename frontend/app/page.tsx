@@ -298,15 +298,29 @@ export default function InterpolatorPage() {
         <div className="card">
           {modelMetrics && (
             <div className="model-performance">
+              <h3>Model Performance</h3>
+              <div className="metrics-grid">
+                <div className="metric">
+                  <div className="metric-label">Test RMSE</div>
+                  <div className="metric-value">{modelMetrics.test_rmse?.toFixed(6) || 'N/A'}</div>
                 </div>
                 <div className="metric">
                   <div className="metric-label">R² Score</div>
-                  <div className="metric-value">{modelMetrics.val_r2.toFixed(4)}</div>
+                  <div className="metric-value">{modelMetrics.test_r2?.toFixed(4) || 'N/A'}</div>
                 </div>
+                <div className="metric">
+                  <div className="metric-label">Training Time</div>
+                  <div className="metric-value">{modelMetrics.training_time?.toFixed(2) || 'N/A'}s</div>
+                </div>
+                {modelMetrics.training_samples && (
+                  <div className="metric">
+                    <div className="metric-label">Training Samples</div>
+                    <div className="metric-value">{modelMetrics.training_samples}</div>
+                  </div>
+                )}
               </div>
             </div>
-  )
-}
+          )}
 
           <h2>Test Prediction</h2>
 
@@ -354,21 +368,21 @@ export default function InterpolatorPage() {
             Predict
           </button>
 
-{
-  predictionResult !== null && (
-    <div className="prediction-result">
-      <h3>Prediction Result</h3>
-      <div className="result-value">{predictionResult.toFixed(6)}</div>
-      <div className="input-vector">
-        Input: [{predictionInputs.map(v => v.toFixed(2)).join(", ")}]
-      </div>
-    </div>
-  )
-}
+          {
+            predictionResult !== null && (
+              <div className="prediction-result">
+                <h3>Prediction Result</h3>
+                <div className="result-value">{predictionResult.toFixed(6)}</div>
+                <div className="input-vector">
+                  Input: [{predictionInputs.map(v => v.toFixed(2)).join(", ")}]
+                </div>
+              </div>
+            )
+          }
 
-<button className="btn-text" onClick={() => { setActiveStep(1); setTrainedModel(false); setUploadStatus(""); setPredictionResult(null); }}>
-  ← Start Over
-</button>
+          <button className="btn-text" onClick={() => { setActiveStep(1); setTrainedModel(false); setUploadStatus(""); setPredictionResult(null); }}>
+            ← Start Over
+          </button>
         </div >
       )}
     </div >
