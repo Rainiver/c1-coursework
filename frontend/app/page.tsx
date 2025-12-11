@@ -9,8 +9,10 @@ export default function InterpolatorPage() {
   const [datasetStats, setDatasetStats] = useState<any>(null);
   const [training, setTraining] = useState(false);
   const [trainingProgress, setTrainingProgress] = useState("");
+  const [trainingEpochProgress, setTrainingEpochProgress] = useState(0); // 0-100%
   const [epochs, setEpochs] = useState(200);
   const [trainedModel, setTrainedModel] = useState(false);
+  const [modelMetrics, setModelMetrics] = useState<any>(null);
   const [predictionInputs, setPredictionInputs] = useState([0.5, 0.5, 0.5, 0.5, 0.5]);
   const [predictionResult, setPredictionResult] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -51,25 +53,39 @@ export default function InterpolatorPage() {
   const handleTrain = async () => {
     setTraining(true);
     setTrainingProgress("Initializing training...");
+    setTrainingEpochProgress(0);
+
+    // Simulate epoch progress (since we can't get real-time updates from FastAPI easily)
+    const progressInterval = setInterval(() => {
+      setTrainingEpochProgress(prev => {
+        if (prev >= 95) return prev;
+        return prev + 1;
+      });
+    }, (epochs * 20) / 100); // Rough estimate
 
     try {
       const res = await fetch("/api/train", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          hidden_layers: [64, 32, 16],
+          hidden_layers: [128, 64, 32],
           learning_rate: 0.001,
           max_epochs: epochs,
         }),
       });
 
+      clearInterval(progressInterval);
+      setTrainingEpochProgress(100);
+
       const data = await res.json();
       if (res.ok) {
-        setTrainingProgress(`Training complete! Val R²: ${data.metrics.val_r2.toFixed(4)}`);
+        setModelMetrics(data.metrics);
+        setTrainingProgress(`Training complete!`);
         setTrainedModel(true);
-        setActiveStep(3);
+        setTimeout(() => setActiveStep(3), 1000);
       }
     } catch (err) {
+      clearInterval(progressInterval);
       setTrainingProgress("Training failed");
     } finally {
       setTraining(false);
@@ -100,6 +116,15 @@ export default function InterpolatorPage() {
 
   const resetInputs = () => {
     setPredictionInputs([0.5, 0.5, 0.5, 0.5, 0.5]);
+  };
+
+  const handleInputChange = (index: number, value: string) => {
+    const numValue = parseFloat(value);
+    if (!isNaN(numValue) && numValue >= 0 && numValue <= 1) {
+      const newInputs = [...predictionInputs];
+      newInputs[index] = numValue;
+      setPredictionInputs(newInputs);
+    }
   };
 
   return (
@@ -221,25 +246,65 @@ export default function InterpolatorPage() {
               {training ? "Training..." : "Start Training"}
             </button>
 
-            {trainingProgress && (
+            {training && (
               <div className="training-progress">
                 <h4>Training Progress</h4>
-                <div className="progress-text">{trainingProgress}</div>
+                <div className="progress-bar-container">
+                  <div className="progress-bar" style={{ width: `${trainingEpochProgress}%` }}></div>
+                </div>
+                <div className="progress-text">
+                  {trainingEpochProgress < 100 ? `Training: ${trainingEpochProgress}%` : "Finalizing..."}
+                </div>
+              </div>
+            )}
+
+            {trainingProgress && !training && (
+              <div className="training-result">
+                <p>{trainingProgress}</p>
               </div>
             )}
           </div>
 
-          {trainedModel && (
-            <button className="btn-secondary" onClick={() => setActiveStep(3)}>
-              Continue to Predictions →
+          <div className="button-row">
+            {trainedModel && (
+              <button className="btn-primary" onClick={() => setActiveStep(3)}>
+                Continue to Predictions →
+              </button>
+            )}
+            <button className="btn-text" onClick={() => { setActiveStep(1); setTrainedModel(false); setUploadStatus(""); }}>
+              ← Start Over
             </button>
-          )}
+          </div>
         </div>
       )}
 
       {/* Step 3: Predict */}
       {activeStep === 3 && (
         <div className="card">
+          {modelMetrics && (
+            <div className="model-performance">
+              <h3>Model Performance</h3>
+              <div className="metrics-grid">
+                <div className="metric">
+                  <div className="metric-label">Training Time</div>
+                  <div className="metric-value">{modelMetrics.training_time.toFixed(2)}s</div>
+                </div>
+                <div className="metric">
+                  <div className="metric-label">Final Loss</div>
+                  <div className="metric-value">{modelMetrics.final_loss.toFixed(6)}</div>
+                </div>
+                <div className="metric">
+                  <div className="metric-label">Validation MSE</div>
+                  <div className="metric-value">{modelMetrics.val_mse.toFixed(6)}</div>
+                </div>
+                <div className="metric">
+                  <div className="metric-label">R² Score</div>
+                  <div className="metric-value">{modelMetrics.val_r2.toFixed(4)}</div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <h2>Test Prediction</h2>
 
           <div className="sliders">
@@ -259,7 +324,15 @@ export default function InterpolatorPage() {
                       setPredictionInputs(newInputs);
                     }}
                   />
-                  <span className="slider-value">{value.toFixed(2)}</span>
+                  <input
+                    type="number"
+                    className="number-input"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={value.toFixed(2)}
+                    onChange={(e) => handleInputChange(idx, e.target.value)}
+                  />
                 </div>
               </div>
             ))}
@@ -281,11 +354,14 @@ export default function InterpolatorPage() {
           {predictionResult !== null && (
             <div className="prediction-result">
               <h3>Prediction Result</h3>
-              <div className="result-value">{predictionResult.toFixed(4)}</div>
+              <div className="result-value">{predictionResult.toFixed(6)}</div>
+              <div className="input-vector">
+                Input: [{predictionInputs.map(v => v.toFixed(2)).join(", ")}]
+              </div>
             </div>
           )}
 
-          <button className="btn-text" onClick={() => setActiveStep(1)}>
+          <button className="btn-text" onClick={() => { setActiveStep(1); setTrainedModel(false); setUploadStatus(""); setPredictionResult(null); }}>
             ← Start Over
           </button>
         </div>

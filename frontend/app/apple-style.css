@@ -64,8 +64,15 @@ body {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
 }
 
 /* Steps */
@@ -232,7 +239,7 @@ body {
 .btn-text {
   background: none;
   border: none;
-  color:#007AFF;
+  color: #007AFF;
   font-size: 15px;
   font-weight: 500;
   cursor: pointer;
@@ -326,11 +333,113 @@ body {
   margin-bottom: 12px;
 }
 
+.progress-bar-container {
+  width: 100%;
+  height: 8px;
+  background: #E8E8ED;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #007AFF 0%, #0051D5 100%);
+  transition: width 0.3s ease;
+  border-radius: 4px;
+}
+
 .progress-text {
   font-family: 'SF Mono', 'Monaco', monospace;
   font-size: 14px;
   color: #424245;
   line-height: 1.6;
+  text-align: center;
+}
+
+.training-result {
+  margin-top: 16px;
+  padding: 16px;
+  background: #E8F5E9;
+  color: #2E7D32;
+  border-radius: 12px;
+  text-align: center;
+  font-weight: 500;
+}
+
+.button-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  flex-direction: column;
+}
+
+/* Model Performance */
+.model-performance {
+  background: linear-gradient(135deg, #F5F9FF 0%, #E8F5E9 100%);
+  padding: 24px;
+  border-radius: 16px;
+  margin-bottom: 32px;
+}
+
+.model-performance h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #1D1D1F;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+}
+
+.metric {
+  background: white;
+  padding: 16px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.metric-label {
+  font-size: 13px;
+  color: #86868B;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.metric-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1D1D1F;
+}
+
+/* Number Input */
+.number-input {
+  width: 80px;
+  padding: 8px 12px;
+  border: 1px solid #D1D1D6;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.number-input:focus {
+  outline: none;
+  border-color: #007AFF;
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+/* Input Vector Display */
+.input-vector {
+  margin-top: 16px;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.8);
+  font-family: 'SF Mono', 'Monaco', monospace;
 }
 
 /* Sliders */
@@ -424,7 +533,7 @@ body {
   .steps {
     flex-direction: column;
   }
-  
+
   .card {
     padding: 24px;
   }
