@@ -2,6 +2,10 @@
 import { useState, useRef } from "react";
 import "./apple-style.css";
 
+// API URL: always use localhost:8000 from browser (Docker port mapping)
+const API_URL = 'http://localhost:8000';
+
+
 export default function InterpolatorPage() {
   const [activeStep, setActiveStep] = useState(1);
   const [file, setFile] = useState<File | null>(null);
@@ -31,7 +35,7 @@ export default function InterpolatorPage() {
     formData.append("file", file);
 
     try {
-      const res = await fetch("/api/upload", {
+      const res = await fetch(`${API_URL}/upload`, {
         method: "POST",
         body: formData,
       });
@@ -64,7 +68,7 @@ export default function InterpolatorPage() {
     }, (epochs * 20) / 100); // Rough estimate
 
     try {
-      const res = await fetch("/api/train", {
+      const res = await fetch(`${API_URL}/train`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -95,7 +99,7 @@ export default function InterpolatorPage() {
   // Step 3: Predict
   const handlePredict = async () => {
     try {
-      const res = await fetch("/api/predict", {
+      const res = await fetch(`${API_URL}/predict`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ features: predictionInputs }),
