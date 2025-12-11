@@ -240,37 +240,71 @@ def generate_synthetic_pkl(n=5000, seed=123, workdir=".", filename="synthetic_5d
     return filepath
 
 
+
+
 if __name__ == "__main__":
-    # Quick test
-    print("Generating synthetic data...")
-    pkl_path = generate_synthetic_pkl(n=1000)
+    import argparse
     
-    print(f"\nTesting model training...")
-    with open(pkl_path, 'rb') as f:
-        data = pickle.load(f)
+    parser = argparse.ArgumentParser(description="5D Neural Network Interpolator")
+    parser.add_argument("--mode", choices=["generate", "test"], default="test",
+                        help="Mode: generate synthetic data or test model")
+    parser.add_argument("--n", type=int, default=1000,
+                        help="Number of data points to generate")
+    parser.add_argument("--workdir", default=".",
+                        help="Working directory for output files")
+    parser.add_argument("--filename", default="synthetic_5d_data.pkl",
+                        help="Output filename for generated data")
+    parser.add_argument("--seed", type=int, default=123,
+                        help="Random seed for reproducibility")
     
-    X, y = data['X'], data['y']
+    args = parser.parse_args()
     
-    # Simple train-test split
-    split_idx = int(0.8 * len(X))
-    X_train, X_test = X[:split_idx], X[split_idx:]
-    y_train, y_test = y[:split_idx], y[split_idx:]
+    if args.mode == "generate":
+        # Generate synthetic test data
+        print(f"Generating {args.n} synthetic 5D data points...")
+        pkl_path = generate_synthetic_pkl(
+            n=args.n,
+            seed=args.seed,
+            workdir=args.workdir,
+            filename=args.filename
+        )
+        print(f"✓ Data saved to: {pkl_path}")
     
-    # Normalize
-    x_mean, x_std = X_train.mean(axis=0), X_train.std(axis=0)
-    y_mean, y_std = y_train.mean(), y_train.std()
-    stats = Normalstats(x_mean, x_std, y_mean, y_std)
-    
-    X_train_norm = (X_train - x_mean) / (x_std + 1e-8)
-    y_train_norm = (y_train - y_mean) / (y_std + 1e-8)
-    
-    # Train
-    model = ModelHandler(max_epochs=100)
-    model.stats = stats
-    model.fit(X_train_norm, y_train_norm, verbose=True)
-    
-    # Test
-    y_pred = interpolate(model, stats, X_test)
-    mse = np.mean((y_pred - y_test)**2)
-    print(f"\nTest MSE: {mse:.6f}")
-    print("✓ Model test passed!")
+    elif args.mode == "test":
+        # Quick test mode
+        print("Running quick model test...")
+        print("\n1. Generating synthetic data...")
+        pkl_path = generate_synthetic_pkl(n=1000)
+        
+        print("\n2. Testing model training...")
+        with open(pkl_path, 'rb') as f:
+            data = pickle.load(f)
+        
+        X, y = data['X'], data['y']
+        
+        # Simple train-test split
+        split_idx = int(0.8 * len(X))
+        X_train, X_test = X[:split_idx], X[split_idx:]
+        y_train, y_test = y[:split_idx], y[split_idx:]
+        
+        # Normalize
+        x_mean, x_std = X_train.mean(axis=0), X_train.std(axis=0)
+        y_mean, y_std = y_train.mean(), y_train.std()
+        stats = Normalstats(x_mean, x_std, y_mean, y_std)
+        
+        X_train_norm = (X_train - x_mean) / (x_std + 1e-8)
+        y_train_norm = (y_train - y_mean) / (y_std + 1e-8)
+        
+        # Train
+        print("\n3. Training model...")
+        model = ModelHandler(max_epochs=100)
+        model.stats = stats
+        model.fit(X_train_norm, y_train_norm, verbose=False)
+        
+        # Test
+        print("\n4. Evaluating...")
+        y_pred = interpolate(model, stats, X_test)
+        mse = np.mean((y_pred - y_test)**2)
+        print(f"   Test MSE: {mse:.6f}")
+        print("\n✓ Model test passed!")
+
