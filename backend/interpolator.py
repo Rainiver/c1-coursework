@@ -10,7 +10,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from typing import Optional, Callable, Tuple
+from typing import Optional, Callable, Tuple, List
 import pickle
 import os
 from dataclasses import dataclass
