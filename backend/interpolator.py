@@ -46,9 +46,10 @@ class MLP(nn.Module):
 
 
 class ModelHandler:
-    """Handler for training and using the interpolator model"""
+    """Handler for PyTorch neural network model"""
     
-    def __init__(self, hidden_layers=[128, 64, 32], learning_rate=0.001, max_epochs=500):
+    def __init__(self, hidden_layers: List[int] = [128, 64, 32], 
+                 learning_rate: float = 0.001, max_epochs: int = 500):
         self.hidden_layers = hidden_layers
         self.learning_rate = learning_rate
         self.max_epochs = max_epochs
@@ -280,9 +281,10 @@ if __name__ == "__main__":
         
         # Train
         print("\n3. Training model...")
-        model = ModelHandler(max_epochs=100)
+        model = ModelHandler()  # Use default 500 epochs
         model.stats = stats
         model.fit(X_train_norm, y_train_norm, verbose=True)  # Enable progress display
+
         
         # Test
         print("\n4. Evaluating...")
