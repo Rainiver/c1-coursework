@@ -1,66 +1,295 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
+import { useState, useRef } from "react";
+import "./apple-style.css";
 
-export default function Home() {
+export default function InterpolatorPage() {
+  const [activeStep, setActiveStep] = useState(1);
+  const [file, setFile] = useState<File | null>(null);
+  const [uploadStatus, setUploadStatus] = useState("");
+  const [datasetStats, setDatasetStats] = useState<any>(null);
+  const [training, setTraining] = useState(false);
+  const [training Progress, setTrainingProgress] = useState("");
+  const [epochs, setEpochs] = useState(200);
+  const [trainedModel, setTrainedModel] = useState(false);
+  const [predictionInputs, setPredictionInputs] = useState([0.5, 0.5, 0.5, 0.5, 0.5]);
+  const [predictionResult, setPredictionResult] = useState<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Step 1: Upload
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0]);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setUploadStatus("success");
+        setDatasetStats(data.statistics);
+        setActiveStep(2);
+      } else {
+        setUploadStatus("error");
+      }
+    } catch (err) {
+      setUploadStatus("error");
+    }
+  };
+
+  // Step 2: Train
+  const handleTrain = async () => {
+    setTraining(true);
+    setTrainingProgress("Initializing training...");
+
+    try {
+      const res = await fetch("/api/train", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          hidden_layers: [64, 32, 16],
+          learning_rate: 0.001,
+          max_epochs: epochs,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setTrainingProgress(`Training complete! Val R²: ${data.metrics.val_r2.toFixed(4)}`);
+        setTrainedModel(true);
+        setActiveStep(3);
+      }
+    } catch (err) {
+      setTrainingProgress("Training failed");
+    } finally {
+      setTraining(false);
+    }
+  };
+
+  // Step 3: Predict
+  const handlePredict = async () => {
+    try {
+      const res = await fetch("/api/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ features: predictionInputs }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setPredictionResult(data.prediction);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const randomizeInputs = () => {
+    setPredictionInputs(Array(5).fill(0).map(() => Math.random()));
+  };
+
+  const resetInputs = () => {
+    setPredictionInputs([0.5, 0.5, 0.5, 0.5, 0.5]);
+  };
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="container">
+      <header className="header">
+        <div className="icon">🧮</div>
+        <h1>5D Neural Network Interpolator</h1>
+        <p className="subtitle">Upload your 5D dataset, train a neural network model, and test predictions</p>
+        <div className="backend-status">
+          <span className="status-dot"></span> Backend Connected
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      </header>
+
+      {/* Step Indicators */}
+      <div className="steps">
+        <div className={`step ${activeStep >= 1 ? "active" : ""} ${uploadStatus === "success" ? "complete" : ""}`}>
+          <div className="step-number">
+            {uploadStatus === "success" ? "✓" : "1"}
+          </div>
+          <div className="step-info">
+            <div className="step-title">Upload Data</div>
+            <div className="step-desc">Upload your .pkl dataset</div>
+          </div>
+        </div>
+
+        <div className={`step ${activeStep >= 2 ? "active" : ""} ${trainedModel ? "complete" : ""}`}>
+          <div className="step-number">
+            {trainedModel ? "✓" : "2"}
+          </div>
+          <div className="step-info">
+            <div className="step-title">Train Model</div>
+            <div className="step-desc">Train neural network</div>
+          </div>
+        </div>
+
+        <div className={`step ${activeStep >= 3 ? "active" : ""}`}>
+          <div className="step-number">3</div>
+          <div className="step-info">
+            <div className="step-title">Test Predictions</div>
+            <div className="step-desc">Test model predictions</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Step 1: Upload */}
+      {activeStep === 1 && (
+        <div className="card">
+          <h2>Step 1: Upload Your Dataset</h2>
+
+          <div
+            className="upload-zone"
+            onClick={() => fileInputRef.current?.click()}
           >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+            <div className="upload-icon">📁</div>
+            <p className="upload-text">
+              {file ? file.name : "Click to upload or drag and drop"}
+            </p>
+            <p className="upload-hint">.pkl files only</p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pkl"
+              onChange={handleFileSelect}
+              style={{ display: "none" }}
             />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          </div>
+
+          {file && (
+            <button className="btn-primary" onClick={handleUpload}>
+              Upload Dataset
+            </button>
+          )}
         </div>
-      </main>
+      )}
+
+      {/* Step 2: Train */}
+      {activeStep === 2 && (
+        <div className="card">
+          {uploadStatus === "success" && (
+            <div className="success-banner">
+              ✓ Successfully uploaded {datasetStats?.total_samples.toLocaleString()} data points!
+            </div>
+          )}
+
+          <h2>Step 2: Train Your Model</h2>
+
+          {datasetStats && (
+            <div className="dataset-info">
+              <h3>Dataset Information</h3>
+              <ul>
+                <li>• {datasetStats.total_samples.toLocaleString()} data points</li>
+                <li>• {datasetStats.n_features} input features</li>
+                <li>• Target range: [{datasetStats.target_distribution.min.toFixed(3)}, {datasetStats.target_distribution.max.toFixed(3)}]</li>
+              </ul>
+            </div>
+          )}
+
+          <div className="train-section">
+            <h3>Train Model</h3>
+
+            <div className="input-group">
+              <label>Training Epochs</label>
+              <input
+                type="number"
+                value={epochs}
+                onChange={(e) => setEpochs(parseInt(e.target.value))}
+                min="10"
+                max="1000"
+                disabled={training}
+              />
+              <small>More epochs = better accuracy, longer training time</small>
+            </div>
+
+            <button
+              className="btn-primary"
+              onClick={handleTrain}
+              disabled={training}
+            >
+              {training ? "Training..." : "Start Training"}
+            </button>
+
+            {trainingProgress && (
+              <div className="training-progress">
+                <h4>Training Progress</h4>
+                <div className="progress-text">{trainingProgress}</div>
+              </div>
+            )}
+          </div>
+
+          {trainedModel && (
+            <button className="btn-secondary" onClick={() => setActiveStep(3)}>
+              Continue to Predictions →
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Step 3: Predict */}
+      {activeStep === 3 && (
+        <div className="card">
+          <h2>Test Prediction</h2>
+
+          <div className="sliders">
+            {predictionInputs.map((value, idx) => (
+              <div key={idx} className="slider-group">
+                <label>X{idx + 1}</label>
+                <div className="slider-container">
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={value}
+                    onChange={(e) => {
+                      const newInputs = [...predictionInputs];
+                      newInputs[idx] = parseFloat(e.target.value);
+                      setPredictionInputs(newInputs);
+                    }}
+                  />
+                  <span className="slider-value">{value.toFixed(2)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="button-group">
+            <button className="btn-secondary" onClick={randomizeInputs}>
+              Randomize
+            </button>
+            <button className="btn-secondary" onClick={resetInputs}>
+              Reset
+            </button>
+          </div>
+
+          <button className="btn-primary" onClick={handlePredict}>
+            Predict
+          </button>
+
+          {predictionResult !== null && (
+            <div className="prediction-result">
+              <h3>Prediction Result</h3>
+              <div className="result-value">{predictionResult.toFixed(4)}</div>
+            </div>
+          )}
+
+          <button className="btn-text" onClick={() => setActiveStep(1)}>
+            ← Start Over
+          </button>
+        </div>
+      )}
     </div>
   );
 }
