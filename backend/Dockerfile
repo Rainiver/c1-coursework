@@ -2,6 +2,9 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
+# Install curl for healthcheck
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
 # Copy only requirements first for better caching
 COPY pyproject.toml ./
 
@@ -19,4 +22,5 @@ EXPOSE 8000
 
 # Run server
 CMD ["python", "-m", "uvicorn", "api.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
+
 
