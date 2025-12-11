@@ -3,8 +3,9 @@ version: '3.8'
 services:
   backend:
     build:
-      context: .
-      dockerfile: backend/Dockerfile
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: interpolator-backend
     ports:
       - "8000:8000"
     volumes:
@@ -12,14 +13,24 @@ services:
       - ./uploads:/app/uploads
     environment:
       - PYTHONUNBUFFERED=1
+    networks:
+      - interpolator-network
 
   frontend:
     build:
-      context: .
-      dockerfile: frontend/Dockerfile
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: interpolator-frontend
     ports:
       - "3000:3000"
     depends_on:
       - backend
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_API_URL=http://backend:8000
+    networks:
+      - interpolator-network
+
+networks:
+  interpolator-network:
+    name: interpolator_interpolator-network
+    driver: bridge
