@@ -255,10 +255,11 @@ if __name__ == "__main__":
         print(f"✓ Data saved to: {pkl_path}")
     
     elif args.mode == "test":
-        # Quick test mode
+        # Quick test mode with full-size dataset (5000 samples like production)
         print("Running quick model test...")
-        print("\n1. Generating synthetic data...")
-        pkl_path = generate_synthetic_pkl(n=1000)
+        print("\n1. Generating synthetic data (5000 samples)...")
+        pkl_path = generate_synthetic_pkl(n=5000)
+
         
         print("\n2. Testing model training...")
         with open(pkl_path, 'rb') as f:
