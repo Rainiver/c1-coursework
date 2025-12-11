@@ -83,7 +83,17 @@ export default function InterpolatorPage() {
 
       const data = await res.json();
       if (res.ok) {
-        setModelMetrics(data.metrics);
+        // Handle new API response format with optional fields
+        const metrics = {
+          training_time: data.metrics?.training_time || 0,
+          test_rmse: data.metrics?.test_rmse || data.metrics?.val_rmse || 0,
+          test_r2: data.metrics?.test_r2 || data.metrics?.val_r2 || 0,
+          training_samples: data.metrics?.training_samples || 0,
+          test_samples: data.metrics?.test_samples || 0,
+          epochs_trained: data.metrics?.epochs_trained || epochs
+        };
+
+        setModelMetrics(metrics);
         setTrainingProgress(`Training complete!`);
         setTrainedModel(true);
         setTimeout(() => setActiveStep(3), 1000);
@@ -91,6 +101,7 @@ export default function InterpolatorPage() {
     } catch (err) {
       clearInterval(progressInterval);
       setTrainingProgress("Training failed");
+      console.error("Training error:", err);
     } finally {
       setTraining(false);
     }
@@ -287,19 +298,6 @@ export default function InterpolatorPage() {
         <div className="card">
           {modelMetrics && (
             <div className="model-performance">
-              <h3>Model Performance</h3>
-              <div className="metrics-grid">
-                <div className="metric">
-                  <div className="metric-label">Training Time</div>
-                  <div className="metric-value">{modelMetrics.training_time.toFixed(2)}s</div>
-                </div>
-                <div className="metric">
-                  <div className="metric-label">Final Loss</div>
-                  <div className="metric-value">{modelMetrics.final_loss.toFixed(6)}</div>
-                </div>
-                <div className="metric">
-                  <div className="metric-label">Validation MSE</div>
-                  <div className="metric-value">{modelMetrics.val_mse.toFixed(6)}</div>
                 </div>
                 <div className="metric">
                   <div className="metric-label">R² Score</div>
@@ -307,7 +305,8 @@ export default function InterpolatorPage() {
                 </div>
               </div>
             </div>
-          )}
+  )
+}
 
           <h2>Test Prediction</h2>
 
@@ -355,21 +354,23 @@ export default function InterpolatorPage() {
             Predict
           </button>
 
-          {predictionResult !== null && (
-            <div className="prediction-result">
-              <h3>Prediction Result</h3>
-              <div className="result-value">{predictionResult.toFixed(6)}</div>
-              <div className="input-vector">
-                Input: [{predictionInputs.map(v => v.toFixed(2)).join(", ")}]
-              </div>
-            </div>
-          )}
-
-          <button className="btn-text" onClick={() => { setActiveStep(1); setTrainedModel(false); setUploadStatus(""); setPredictionResult(null); }}>
-            ← Start Over
-          </button>
-        </div>
-      )}
+{
+  predictionResult !== null && (
+    <div className="prediction-result">
+      <h3>Prediction Result</h3>
+      <div className="result-value">{predictionResult.toFixed(6)}</div>
+      <div className="input-vector">
+        Input: [{predictionInputs.map(v => v.toFixed(2)).join(", ")}]
+      </div>
     </div>
+  )
+}
+
+<button className="btn-text" onClick={() => { setActiveStep(1); setTrainedModel(false); setUploadStatus(""); setPredictionResult(null); }}>
+  ← Start Over
+</button>
+        </div >
+      )}
+    </div >
   );
 }
