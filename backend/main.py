@@ -95,6 +95,7 @@ async def upload_dataset(file: UploadFile = File(...)):
             os.remove(file_path)
         raise HTTPException(status_code=400, detail=f"Failed to load dataset: {str(e)}")
 
+
 @app.post("/train")
 @app.post("/api/train")
 def train_model(config: TrainConfig):
@@ -102,19 +103,19 @@ def train_model(config: TrainConfig):
         raise HTTPException(status_code=400, detail="No dataset loaded. Upload first.")
     
     try:
-        # Update model config
+        # Initialize model with config
         global model_handler
         model_handler = ModelHandler(
-            hidden_layers=config.hidden_layers, 
-            learning_rate=config.learning_rate, 
+            hidden_layers=config.hidden_layers if config.hidden_layers else [128, 64, 32],
+            learning_rate=config.learning_rate,
             max_epochs=config.max_epochs
         )
         
         # Split and preprocess
         (X_train, y_train), (X_val, y_val), _ = data_handler.preprocess_and_split()
         
-        # Train
-        results = model_handler.fit(X_train, y_train)
+        # Train with validation set
+        results = model_handler.fit(X_train, y_train, X_val=X_val, y_val=y_val)
         
         # Evaluate on validation
         preds_val = model_handler.predict(X_val)
@@ -124,14 +125,15 @@ def train_model(config: TrainConfig):
         return {
             "status": "training_complete",
             "metrics": {
-                "training_time": results["training_time"],
-                "final_loss": float(results["losses"][-1]),
+                "training_time": float(results["training_time"]),
+                "final_loss": float(results["losses"][-1]) if results["losses"] else 0.0,
                 "val_mse": float(mse),
                 "val_r2": float(r2)
             }
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/predict")
 @app.post("/api/predict")

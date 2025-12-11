@@ -8,7 +8,7 @@ export default function InterpolatorPage() {
   const [uploadStatus, setUploadStatus] = useState("");
   const [datasetStats, setDatasetStats] = useState<any>(null);
   const [training, setTraining] = useState(false);
-  const [training Progress, setTrainingProgress] = useState("");
+  const [trainingProgress, setTrainingProgress] = useState("");
   const [epochs, setEpochs] = useState(200);
   const [trainedModel, setTrainedModel] = useState(false);
   const [predictionInputs, setPredictionInputs] = useState([0.5, 0.5, 0.5, 0.5, 0.5]);

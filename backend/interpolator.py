@@ -50,7 +50,7 @@ def train_model(data_path: str, epochs: int, save_path: str = None):
     # Initialize model
     print(f"\n🧠 Initializing model...")
     model = ModelHandler(
-        hidden_layers=[64, 32, 16],
+        hidden_layers=[128, 64, 32],
         learning_rate=0.001,
         max_epochs=epochs
     )
@@ -70,7 +70,7 @@ def train_model(data_path: str, epochs: int, save_path: str = None):
     
     import numpy as np
     start_time = time.time()
-    results = model.fit(X_train, y_train, epoch_callback=epoch_callback)
+    results = model.fit(X_train, y_train, X_val=X_val, y_val=y_val, epoch_callback=epoch_callback)
     training_time = time.time() - start_time
     
     # Final evaluation
