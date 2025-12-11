@@ -3,17 +3,19 @@
 5D Neural Network Interpolator (PyTorch)
 
 Core module for training and using a neural network to interpolate 5D data.
-Includes normalization, early stopping, and model persistence.
+Includes normalization, batch processing, LR scheduling, and early stopping.
 """
 
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from torch.utils.data import TensorDataset, DataLoader
 from typing import Optional, Callable, Tuple, List
 import pickle
 import os
 from dataclasses import dataclass
+
 
 
 @dataclass
@@ -46,27 +48,37 @@ class MLP(nn.Module):
 
 
 class ModelHandler:
-    """Handler for PyTorch neural network model"""
+    """Handler for PyTorch neural network model with advanced training features"""
     
     def __init__(self, hidden_layers: List[int] = [128, 64, 32], 
-                 learning_rate: float = 0.001, max_epochs: int = 500):
+                 learning_rate: float = 5e-3,  # Increased from 0.001
+                 max_epochs: int = 200,  # Back to 200 like reference
+                 batch_size: int = 256,  # NEW: batch processing
+                 weight_decay: float = 1e-6):  # NEW: L2 regularization
         self.hidden_layers = hidden_layers
         self.learning_rate = learning_rate
         self.max_epochs = max_epochs
+        self.batch_size = batch_size
+        self.weight_decay = weight_decay
         self.model = None
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.stats = None
 
+
+
     def fit(self, X: np.ndarray, y: np.ndarray, verbose: bool = False, 
-            epoch_callback: Optional[Callable] = None):
+            epoch_callback: Optional[Callable] = None,
+            X_val: Optional[np.ndarray] = None, y_val: Optional[np.ndarray] = None):
         """
-        Train the model without early stopping.
+        Train the model with batch processing, LR scheduling, and early stopping.
         
         Args:
             X: Training features (N, 5)
             y: Training targets (N,)
             verbose: Print progress
-            epoch_callback: Callback(epoch, train_mse, lr)
+            epoch_callback: Callback(epoch, train_loss, val_loss, lr)
+            X_val: Validation features
+            y_val: Validation targets
         
         Returns:
             dict: Training results with losses and timing
@@ -77,40 +89,103 @@ class ModelHandler:
         self.model = MLP(in_dim=5, hidden_layers=self.hidden_layers, out_dim=1).to(self.device)
         
         # Convert to tensors
-        X_train = torch.FloatTensor(X).to(self.device)
-        y_train = torch.FloatTensor(y).reshape(-1, 1).to(self.device)
+        X_train = torch.FloatTensor(X)
+        y_train = torch.FloatTensor(y).reshape(-1, 1)
         
-        # Optimizer and loss
-        optimizer = optim.Adam(self.model.parameters(), lr=self.learning_rate)
+        # Create DataLoader for batch processing
+        train_dataset = TensorDataset(X_train, y_train)
+        train_loader = DataLoader(
+            train_dataset, 
+            batch_size=self.batch_size, 
+            shuffle=True,  # Shuffle for better generalization
+            drop_last=False
+        )
+        
+        # Validation data
+        if X_val is not None:
+            X_val_tensor = torch.FloatTensor(X_val).to(self.device)
+            y_val_tensor = torch.FloatTensor(y_val).reshape(-1, 1).to(self.device)
+        
+        # Optimizer with weight decay (L2 regularization)
+        optimizer = optim.Adam(
+            self.model.parameters(), 
+            lr=self.learning_rate,
+            weight_decay=self.weight_decay
+        )
+        
+        # Learning rate scheduler (Cosine Annealing)
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(
+            optimizer, 
+            T_max=self.max_epochs
+        )
+        
         criterion = nn.MSELoss()
         
-        # Training loop
+        # Training loop with early stopping
         start_time = time.time()
         losses = []
+        best_val_loss = float('inf')
+        patience_counter = 0
+        patience = 20  # Reference uses 20
         
         for epoch in range(self.max_epochs):
+            # Training phase
             self.model.train()
+            epoch_loss = 0.0
+            num_batches = 0
             
-            # Forward pass
-            predictions = self.model(X_train)
-            loss = criterion(predictions, y_train)
+            for batch_X, batch_y in train_loader:
+                batch_X = batch_X.to(self.device)
+                batch_y = batch_y.to(self.device)
+                
+                # Forward pass
+                predictions = self.model(batch_X)
+                loss = criterion(predictions, batch_y)
+                
+                # Backward pass
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+                
+                epoch_loss += loss.item()
+                num_batches += 1
             
-            # Backward pass
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+            # Average loss for epoch
+            avg_train_loss = epoch_loss / num_batches
+            losses.append(avg_train_loss)
             
-            # Record loss
-            current_loss = loss.item()
-            losses.append(current_loss)
+            # Validation phase
+            val_loss = None
+            if X_val is not None:
+                self.model.eval()
+                with torch.no_grad():
+                    val_pred = self.model(X_val_tensor)
+                    val_loss = criterion(val_pred, y_val_tensor).item()
+                
+                # Early stopping based on validation loss
+                if val_loss < best_val_loss:
+                    best_val_loss = val_loss
+                    patience_counter = 0
+                else:
+                    patience_counter += 1
+                
+                if patience_counter >= patience:
+                    if verbose:
+                        print(f"Early stopping at epoch {epoch+1}")
+                    break
+            
+            # Step the learning rate scheduler
+            scheduler.step()
+            current_lr = scheduler.get_last_lr()[0]
             
             # Callback for progress updates
             if epoch_callback:
-                epoch_callback(epoch, current_loss, self.learning_rate)
+                epoch_callback(epoch, avg_train_loss, val_loss, current_lr)
             
             # Print progress
             if verbose and (epoch + 1) % 10 == 0:
-                print(f"Epoch {epoch+1}/{self.max_epochs}, Loss: {current_loss:.6f}")
+                val_str = f", Val Loss: {val_loss:.6f}" if val_loss is not None else ""
+                print(f"Epoch {epoch+1}/{self.max_epochs}, Train Loss: {avg_train_loss:.6f}{val_str}, LR: {current_lr:.6f}")
         
         training_time = time.time() - start_time
         
@@ -122,6 +197,7 @@ class ModelHandler:
             "losses": losses,
             "training_time": training_time
         }
+
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         """Predict using trained model"""
@@ -160,10 +236,29 @@ class ModelHandler:
         self.learning_rate = model_data['learning_rate']
         self.max_epochs = model_data['max_epochs']
         self.stats = model_data.get('stats')
-        
         self.model = MLP(in_dim=5, hidden_layers=self.hidden_layers, out_dim=1).to(self.device)
         self.model.load_state_dict(model_data['state_dict'])
 
+
+def apply_x_norm(X: np.ndarray, stats: Normalstats) -> np.ndarray:
+    """Apply X normalization"""
+    return (X - np.array(stats.x_mean)) / (np.array(stats.x_std) + 1e-12)
+
+def apply_y_norm(y: np.ndarray, stats: Normalstats) -> np.ndarray:
+    """Apply y normalization"""
+    return (y - stats.y_mean) / (stats.y_std + 1e-12)
+
+def invert_y_norm(y_norm: np.ndarray, stats: Normalstats) -> np.ndarray:
+    """Invert y normalization"""
+    return y_norm * (stats.y_std + 1e-12) + stats.y_mean
+
+def compute_norm_stats(X: np.ndarray, y: np.ndarray) -> Normalstats:
+    """Compute normalization statistics from data"""
+    x_mean = X.mean(axis=0)
+    x_std = X.std(axis=0) + 1e-12
+    y_mean = y.mean()
+    y_std = y.std() + 1e-12
+    return Normalstats(x_mean.tolist(), x_std.tolist(), float(y_mean), float(y_std))
 
 def interpolate(model: ModelHandler, stats: Normalstats, X_new: np.ndarray) -> np.ndarray:
     """
@@ -178,13 +273,13 @@ def interpolate(model: ModelHandler, stats: Normalstats, X_new: np.ndarray) -> n
         Predictions in original scale
     """
     # Normalize input
-    X_normalized = (X_new - stats.x_mean) / (stats.x_std + 1e-8)
+    X_normalized = apply_x_norm(X_new, stats)
     
     # Predict (normalized)
     y_normalized = model.predict(X_normalized)
     
     # Denormalize output
-    y_pred = y_normalized * stats.y_std + stats.y_mean
+    y_pred = invert_y_norm(y_normalized, stats)
     
     return y_pred
 
