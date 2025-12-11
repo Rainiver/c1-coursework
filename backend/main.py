@@ -1,11 +1,15 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException, Body
+from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from fivedreg.data import DataHandler
-from fivedreg.model import ModelHandler
-import shutil
-import os
+from typing import List, Optional
 import numpy as np
+import pickle
+import os
+import shutil
+
+# Import from backend modules
+from data import DataHandler
+from interpolator import ModelHandler
 
 app = FastAPI(title="Fivedreg API")
 
