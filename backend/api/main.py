@@ -121,14 +121,31 @@ def train_model(config: TrainConfig):
         # Split into train/val/test (70/10/20)
         (X_train, y_train), (X_val, y_val), (X_test, y_test) = data_handler.preprocess_and_split()
         
-        # Train with validation for early stopping
-        results = model_handler.fit(X_train, y_train, X_val=X_val, y_val=y_val, verbose=False)
+        # Train with validation for early stopping (verbose=True for terminal output)
+        print("\n" + "="*60)
+        print(f"Starting training with {len(X_train)} samples...")
+        print("="*60)
+        results = model_handler.fit(X_train, y_train, X_val=X_val, y_val=y_val, verbose=True)
+
         
         # Evaluate on test set
         preds_test = model_handler.predict(X_test)
         test_mse = np.mean((preds_test - y_test)**2)
         test_rmse = np.sqrt(test_mse)
         r2 = 1 - (np.sum((y_test - preds_test)**2) / np.sum((y_test - np.mean(y_test))**2))
+        
+        # Print summary to terminal
+        print("\n" + "="*60)
+        print("TRAINING COMPLETE!")
+        print("="*60)
+        print(f"Test RMSE:        {test_rmse:.6f}")
+        print(f"Test R² Score:    {r2:.4f}")
+        print(f"Training Time:    {results['training_time']:.2f}s")
+        print(f"Epochs Trained:   {len(results['losses'])}")
+        print(f"Training Samples: {len(X_train)}")
+        print(f"Validation Samples: {len(X_val)}")
+        print(f"Test Samples:     {len(X_test)}")
+        print("="*60 + "\n")
         
         return {
             "status": "training_complete",
@@ -145,7 +162,9 @@ def train_model(config: TrainConfig):
             }
         }
     except Exception as e:
+        print(f"\n❌ Training failed: {str(e)}\n")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 
 
