@@ -26,12 +26,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Global instances (in a real app, might use dependency injection or database)
+# Global instances
 data_handler = DataHandler()
 model_handler = ModelHandler()
-# In Vercel (serverless), only /tmp is writable
-UPLOAD_DIR = "/tmp"
-# os.makedirs(UPLOAD_DIR, exist_ok=True) # /tmp always exists
+
+# Upload directory
+UPLOAD_DIR = "uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
 
 class TrainConfig(BaseModel):
     hidden_layers: list[int] = [64, 32, 16]
@@ -42,12 +44,10 @@ class PredictInput(BaseModel):
     features: list[float]
 
 @app.get("/health")
-@app.get("/api/health")
 def health_check():
     return {"status": "ok"}
 
 @app.post("/upload")
-@app.post("/api/upload")
 async def upload_dataset(file: UploadFile = File(...)):
     filename = file.filename
     if not (filename.endswith(".pkl") or filename.endswith(".npz")):
@@ -105,7 +105,6 @@ async def upload_dataset(file: UploadFile = File(...)):
 
 
 @app.post("/train")
-@app.post("/api/train")
 def train_model(config: TrainConfig):
     if data_handler.X is None:
         raise HTTPException(status_code=400, detail="No dataset loaded. Upload first.")
@@ -144,7 +143,6 @@ def train_model(config: TrainConfig):
 
 
 @app.post("/predict")
-@app.post("/api/predict")
 def predict(input_data: PredictInput):
     if model_handler.model is None:
         raise HTTPException(status_code=400, detail="Model not trained.")
