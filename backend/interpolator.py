@@ -233,6 +233,7 @@ def generate_synthetic_pkl(n=5000, seed=123, workdir=".", filename="synthetic_5d
     data = {'X': X, 'y': y}
     
     filepath = os.path.join(workdir, filename)
+    os.makedirs(workdir, exist_ok=True)  # Create directory if needed
     with open(filepath, 'wb') as f:
         pickle.dump(data, f)
     
