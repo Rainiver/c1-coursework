@@ -26,31 +26,35 @@ class DataHandler:
         
         return self.X, self.y
     
-    def preprocess_and_split(self, train_ratio=0.6, val_ratio=0.2):
+    def preprocess_and_split(self, train_ratio=0.7, val_ratio=0.1):
         """
-        Normalize and split data into train/val/test sets.
+        Split data into train/val/test sets (70/10/20 or 3500/500/1000 for 5000 samples).
+        Validation set is used for early stopping.
         
         Returns:
             (X_train, y_train), (X_val, y_val), (X_test, y_test)
         """
         if self.X is None:
-            raise ValueError("No dataset loaded. Call load_dataset() first.")
             raise ValueError("No data loaded")
         
-        # Simple train-test split
+        # Simple sequential split
         n = len(self.X)
         n_train = int(n * train_ratio)
+        n_val = int(n * val_ratio)
         
         X_train = self.X[:n_train]
         y_train = self.y[:n_train]
-        X_test = self.X[n_train:]
-        y_test = self.y[n_train:]
+        X_val = self.X[n_train:n_train+n_val]
+        y_val = self.y[n_train:n_train+n_val]
+        X_test = self.X[n_train+n_val:]
+        y_test = self.y[n_train+n_val:]
         
         # Fit scaler only on training data
         self.scaler.fit(X_train)
         
-        # Transform both sets
+        # Transform all sets
         X_train = self.scaler.transform(X_train)
+        X_val = self.scaler.transform(X_val)
         X_test = self.scaler.transform(X_test)
         
-        return (X_train, y_train), (X_test, y_test)
+        return (X_train, y_train), (X_val, y_val), (X_test, y_test)

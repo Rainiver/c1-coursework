@@ -118,11 +118,11 @@ def train_model(config: TrainConfig):
             max_epochs=config.max_epochs
         )
         
-        # Split into train/test (80/20) - no validation set
-        (X_train, y_train), (X_test, y_test) = data_handler.preprocess_and_split()
+        # Split into train/val/test (70/10/20)
+        (X_train, y_train), (X_val, y_val), (X_test, y_test) = data_handler.preprocess_and_split()
         
-        # Train on full training set (4000 samples for 5000 total)
-        results = model_handler.fit(X_train, y_train, verbose=False)
+        # Train with validation for early stopping
+        results = model_handler.fit(X_train, y_train, X_val=X_val, y_val=y_val, verbose=False)
         
         # Evaluate on test set
         preds_test = model_handler.predict(X_test)
@@ -139,11 +139,14 @@ def train_model(config: TrainConfig):
                 "test_rmse": float(test_rmse),
                 "test_r2": float(r2),
                 "training_samples": len(X_train),
-                "test_samples": len(X_test)
+                "validation_samples": len(X_val),
+                "test_samples": len(X_test),
+                "epochs_trained": len(results["losses"])
             }
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 
 
