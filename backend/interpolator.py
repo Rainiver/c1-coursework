@@ -282,12 +282,14 @@ if __name__ == "__main__":
         print("\n3. Training model...")
         model = ModelHandler(max_epochs=100)
         model.stats = stats
-        model.fit(X_train_norm, y_train_norm, verbose=False)
+        model.fit(X_train_norm, y_train_norm, verbose=True)  # Enable progress display
         
         # Test
         print("\n4. Evaluating...")
         y_pred = interpolate(model, stats, X_test)
         mse = np.mean((y_pred - y_test)**2)
+        rmse = np.sqrt(mse)
         print(f"   Test MSE: {mse:.6f}")
+        print(f"   Test RMSE: {rmse:.6f}")
         print("\n✓ Model test passed!")
 
