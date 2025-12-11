@@ -35,29 +35,22 @@ class DataHandler:
         """
         if self.X is None:
             raise ValueError("No dataset loaded. Call load_dataset() first.")
+            raise ValueError("No data loaded")
         
-        # Split indices
-        n_samples = len(self.X)
-        n_train = int(n_samples * train_ratio)
-        n_val = int(n_samples * val_ratio)
+        # Simple train-test split
+        n = len(self.X)
+        n_train = int(n * train_ratio)
         
-        # Shuffle
-        indices = np.random.permutation(n_samples)
-        train_idx = indices[:n_train]
-        val_idx = indices[n_train:n_train + n_val]
-        test_idx = indices[n_train + n_val:]
+        X_train = self.X[:n_train]
+        y_train = self.y[:n_train]
+        X_test = self.X[n_train:]
+        y_test = self.y[n_train:]
         
-        # Split
-        X_train, y_train = self.X[train_idx], self.y[train_idx]
-        X_val, y_val = self.X[val_idx], self.y[val_idx]
-        X_test, y_test = self.X[test_idx], self.y[test_idx]
-        
-        # Fit scaler on training data only
+        # Fit scaler only on training data
         self.scaler.fit(X_train)
         
-        # Transform all sets
+        # Transform both sets
         X_train = self.scaler.transform(X_train)
-        X_val = self.scaler.transform(X_val)
         X_test = self.scaler.transform(X_test)
         
-        return (X_train, y_train), (X_val, y_val), (X_test, y_test)
+        return (X_train, y_train), (X_test, y_test)

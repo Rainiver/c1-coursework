@@ -118,28 +118,33 @@ def train_model(config: TrainConfig):
             max_epochs=config.max_epochs
         )
         
-        # Split and preprocess
-        (X_train, y_train), (X_val, y_val), _ = data_handler.preprocess_and_split()
+        # Split into train/test (80/20) - no validation set
+        (X_train, y_train), (X_test, y_test) = data_handler.preprocess_and_split()
         
-        # Train with validation set
-        results = model_handler.fit(X_train, y_train, X_val=X_val, y_val=y_val)
+        # Train on full training set (4000 samples for 5000 total)
+        results = model_handler.fit(X_train, y_train, verbose=False)
         
-        # Evaluate on validation
-        preds_val = model_handler.predict(X_val)
-        mse = np.mean((preds_val - y_val)**2)
-        r2 = 1 - (np.sum((y_val - preds_val)**2) / np.sum((y_val - np.mean(y_val))**2))
+        # Evaluate on test set
+        preds_test = model_handler.predict(X_test)
+        test_mse = np.mean((preds_test - y_test)**2)
+        test_rmse = np.sqrt(test_mse)
+        r2 = 1 - (np.sum((y_test - preds_test)**2) / np.sum((y_test - np.mean(y_test))**2))
         
         return {
             "status": "training_complete",
             "metrics": {
                 "training_time": float(results["training_time"]),
                 "final_loss": float(results["losses"][-1]) if results["losses"] else 0.0,
-                "val_mse": float(mse),
-                "val_r2": float(r2)
+                "test_mse": float(test_mse),
+                "test_rmse": float(test_rmse),
+                "test_r2": float(r2),
+                "training_samples": len(X_train),
+                "test_samples": len(X_test)
             }
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 
 @app.post("/predict")

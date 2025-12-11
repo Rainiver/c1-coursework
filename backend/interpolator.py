@@ -57,18 +57,15 @@ class ModelHandler:
         self.stats = None
 
     def fit(self, X: np.ndarray, y: np.ndarray, verbose: bool = False, 
-            epoch_callback: Optional[Callable] = None, 
-            X_val: Optional[np.ndarray] = None, y_val: Optional[np.ndarray] = None):
+            epoch_callback: Optional[Callable] = None):
         """
-        Train the model with early stopping.
+        Train the model without early stopping.
         
         Args:
             X: Training features (N, 5)
             y: Training targets (N,)
             verbose: Print progress
-            epoch_callback: Callback(epoch, train_mse, val_mse, lr)
-            X_val: Validation features
-            y_val: Validation targets
+            epoch_callback: Callback(epoch, train_mse, lr)
         
         Returns:
             dict: Training results with losses and timing
@@ -82,10 +79,6 @@ class ModelHandler:
         X_train = torch.FloatTensor(X).to(self.device)
         y_train = torch.FloatTensor(y).reshape(-1, 1).to(self.device)
         
-        if X_val is not None:
-            X_val_tensor = torch.FloatTensor(X_val).to(self.device)
-            y_val_tensor = torch.FloatTensor(y_val).reshape(-1, 1).to(self.device)
-        
         # Optimizer and loss
         optimizer = optim.Adam(self.model.parameters(), lr=self.learning_rate)
         criterion = nn.MSELoss()
@@ -93,52 +86,41 @@ class ModelHandler:
         # Training loop
         start_time = time.time()
         losses = []
-        best_val_loss = float('inf')
-        patience_counter = 0
-        patience = 50
         
         for epoch in range(self.max_epochs):
             self.model.train()
             
             # Forward pass
-            outputs = self.model(X_train)
-            loss = criterion(outputs, y_train)
+            predictions = self.model(X_train)
+            loss = criterion(predictions, y_train)
             
             # Backward pass
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             
-            train_mse = loss.item()
-            losses.append(train_mse)
+            # Record loss
+            current_loss = loss.item()
+            losses.append(current_loss)
             
-            # Validation
-            val_mse = train_mse
-            if X_val is not None:
-                self.model.eval()
-                with torch.no_grad():
-                    val_outputs = self.model(X_val_tensor)
-                    val_loss = criterion(val_outputs, y_val_tensor)
-                    val_mse = val_loss.item()
-                
-                # Early stopping
-                if val_mse < best_val_loss:
-                    best_val_loss = val_mse
-                    patience_counter = 0
-                else:
-                    patience_counter += 1
-                
-                if patience_counter >= patience:
-                    if verbose or epoch_callback:
-                        print(f"Early stopping at epoch {epoch + 1}")
-                    break
-            
-            # Callback
+            # Callback for progress updates
             if epoch_callback:
-                epoch_callback(epoch + 1, train_mse, val_mse, self.learning_rate)
+                epoch_callback(epoch, current_loss, self.learning_rate)
+            
+            # Print progress
+            if verbose and (epoch + 1) % 10 == 0:
+                print(f"Epoch {epoch+1}/{self.max_epochs}, Loss: {current_loss:.6f}")
         
         training_time = time.time() - start_time
-        return {"losses": losses, "training_time": training_time}
+        
+        if verbose:
+            print(f"\nTraining completed in {training_time:.2f}s")
+            print(f"Final loss: {losses[-1]:.6f}")
+        
+        return {
+            "losses": losses,
+            "training_time": training_time
+        }
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         """Predict using trained model"""
