@@ -60,11 +60,12 @@ export default function InterpolatorPage() {
     setTrainingProgress("Initializing training...");
     setTrainingEpochProgress(0);
 
-    try {
-      // Start with 10% progress
-      setTrainingEpochProgress(10);
-      setTrainingProgress("Training in progress...");
+    // Smooth progress animation
+    const progressInterval = setInterval(() => {
+      setTrainingEpochProgress((prev) => Math.min(prev + 1, 95));
+    }, (epochs * 20) / 100);
 
+    try {
       const res = await fetch(`${API_URL}/train`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -75,32 +76,19 @@ export default function InterpolatorPage() {
         }),
       });
 
-      // Jump to 90% when backend responds
-      setTrainingEpochProgress(90);
-      setTrainingProgress("Finalizing...");
+      clearInterval(progressInterval);
+      setTrainingEpochProgress(100);
 
       const data = await res.json();
 
-      // Set to 100% on completion
-      setTrainingEpochProgress(100);
-
       if (res.ok) {
-        // Handle new API response format with optional fields
-        const metrics = {
-          training_time: data.metrics?.training_time_seconds || 0,
-          test_rmse: data.metrics?.test_rmse || data.metrics?.val_rmse || 0,
-          test_r2: data.metrics?.test_r2 || data.metrics?.val_r2 || 0,
-          training_samples: data.metrics?.training_samples || 0,
-          test_samples: data.metrics?.test_samples || 0,
-          epochs_trained: data.metrics?.epochs_trained || epochs
-        };
-
-        setModelMetrics(metrics);
-        setTrainingProgress(`Training complete! (${metrics.epochs_trained} epochs)`);
+        setModelMetrics(data.metrics);
+        setTrainingProgress("Training complete!");
         setTrainedModel(true);
         setTimeout(() => setActiveStep(3), 1000);
       }
     } catch (err) {
+      clearInterval(progressInterval);
       setTrainingProgress("Training failed");
       console.error("Training error:", err);
     } finally {
@@ -313,21 +301,10 @@ export default function InterpolatorPage() {
                   <div className="metric-label">Training Time</div>
                   <div className="metric-value">{modelMetrics.training_time?.toFixed(2) || 'N/A'}s</div>
                 </div>
-                <div className="metric">
-                  <div className="metric-label">Training Samples</div>
-                  <div className="metric-value">{modelMetrics.training_samples || 'N/A'}</div>
-                </div>
-                <div className="metric">
-                  <div className="metric-label">Test Samples</div>
-                  <div className="metric-value">{modelMetrics.test_samples || 'N/A'}</div>
-                </div>
-                <div className="metric">
-                  <div className="metric-label">Epochs Trained</div>
-                  <div className="metric-value">{modelMetrics.epochs_trained || 'N/A'}</div>
-                </div>
               </div>
             </div>
           )}
+
 
 
           <h2>Test Prediction</h2>
