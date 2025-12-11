@@ -55,19 +55,16 @@ export default function InterpolatorPage() {
 
   // Step 2: Train
   const handleTrain = async () => {
+    if (!file) return;
     setTraining(true);
     setTrainingProgress("Initializing training...");
     setTrainingEpochProgress(0);
 
-    // Simulate epoch progress (since we can't get real-time updates from FastAPI easily)
-    const progressInterval = setInterval(() => {
-      setTrainingEpochProgress(prev => {
-        if (prev >= 95) return prev;
-        return prev + 1;
-      });
-    }, (epochs * 20) / 100); // Rough estimate
-
     try {
+      // Start with 10% progress
+      setTrainingEpochProgress(10);
+      setTrainingProgress("Training in progress...");
+
       const res = await fetch(`${API_URL}/train`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -78,14 +75,19 @@ export default function InterpolatorPage() {
         }),
       });
 
-      clearInterval(progressInterval);
-      setTrainingEpochProgress(100);
+      // Jump to 90% when backend responds
+      setTrainingEpochProgress(90);
+      setTrainingProgress("Finalizing...");
 
       const data = await res.json();
+
+      // Set to 100% on completion
+      setTrainingEpochProgress(100);
+
       if (res.ok) {
         // Handle new API response format with optional fields
         const metrics = {
-          training_time: data.metrics?.training_time || 0,
+          training_time: data.metrics?.training_time_seconds || 0,
           test_rmse: data.metrics?.test_rmse || data.metrics?.val_rmse || 0,
           test_r2: data.metrics?.test_r2 || data.metrics?.val_r2 || 0,
           training_samples: data.metrics?.training_samples || 0,
@@ -94,12 +96,11 @@ export default function InterpolatorPage() {
         };
 
         setModelMetrics(metrics);
-        setTrainingProgress(`Training complete!`);
+        setTrainingProgress(`Training complete! (${metrics.epochs_trained} epochs)`);
         setTrainedModel(true);
         setTimeout(() => setActiveStep(3), 1000);
       }
     } catch (err) {
-      clearInterval(progressInterval);
       setTrainingProgress("Training failed");
       console.error("Training error:", err);
     } finally {
@@ -312,15 +313,22 @@ export default function InterpolatorPage() {
                   <div className="metric-label">Training Time</div>
                   <div className="metric-value">{modelMetrics.training_time?.toFixed(2) || 'N/A'}s</div>
                 </div>
-                {modelMetrics.training_samples && (
-                  <div className="metric">
-                    <div className="metric-label">Training Samples</div>
-                    <div className="metric-value">{modelMetrics.training_samples}</div>
-                  </div>
-                )}
+                <div className="metric">
+                  <div className="metric-label">Training Samples</div>
+                  <div className="metric-value">{modelMetrics.training_samples || 'N/A'}</div>
+                </div>
+                <div className="metric">
+                  <div className="metric-label">Test Samples</div>
+                  <div className="metric-value">{modelMetrics.test_samples || 'N/A'}</div>
+                </div>
+                <div className="metric">
+                  <div className="metric-label">Epochs Trained</div>
+                  <div className="metric-value">{modelMetrics.epochs_trained || 'N/A'}</div>
+                </div>
               </div>
             </div>
           )}
+
 
           <h2>Test Prediction</h2>
 
