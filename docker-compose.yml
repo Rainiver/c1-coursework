@@ -1,11 +1,9 @@
-name: interpolator
-
 services:
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: backend
+    container_name: interpolator-backend
     ports:
       - "8000:8000"
     volumes:
@@ -26,7 +24,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: frontend
+    container_name: interpolator-frontend
     ports:
       - "3000:3000"
     depends_on:
