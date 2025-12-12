@@ -1,23 +1,21 @@
+name: interpolator
+
 services:
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: interpolator-backend
+    container_name: backend
     ports:
       - "8000:8000"
-    environment:
-      - PYTHONUNBUFFERED=1
-      - PYTHONPATH=/app
     volumes:
       # Persistent storage for models and data
       - models_data:/app/models
       - upload_data:/app/uploads
-      - ./backend/data:/app/data:ro # Optional: mount local data directory
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
-      interval: 30s
-      timeout: 10s
+      interval: 10s
+      timeout: 5s
       retries: 3
       start_period: 10s
     restart: unless-stopped
@@ -28,7 +26,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: interpolator-frontend
+    container_name: frontend
     ports:
       - "3000:3000"
     depends_on:
@@ -36,12 +34,6 @@ services:
         condition: service_healthy
     environment:
       - NEXT_PUBLIC_API_URL=http://backend:8000
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:3000" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 20s
     restart: unless-stopped
     networks:
       - interpolator-network
