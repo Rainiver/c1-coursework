@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>REST API Endpoints &#8212; 5D Interpolator 1.0.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=12dfc556" />
+    <script src="../_static/documentation_options.js?v=8d563738"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Test Suite" href="../testing.html" />
+    <link rel="prev" title="Model Module" href="model.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="rest-api-endpoints">
+<h1>REST API Endpoints<a class="headerlink" href="#rest-api-endpoints" title="Link to this heading">¶</a></h1>
+<p>FastAPI backend endpoints.</p>
+<section id="base-url">
+<h2>Base URL<a class="headerlink" href="#base-url" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Local: <code class="docutils literal notranslate"><span class="pre">http://localhost:8000</span></code></p></li>
+<li><p>Docker: <code class="docutils literal notranslate"><span class="pre">http://backend:8000</span></code></p></li>
+</ul>
+</section>
+<section id="endpoints">
+<h2>Endpoints<a class="headerlink" href="#endpoints" title="Link to this heading">¶</a></h2>
+<section id="get-health">
+<h3>GET /health<a class="headerlink" href="#get-health" title="Link to this heading">¶</a></h3>
+<p>Health check endpoint.</p>
+<p><strong>Response:</strong></p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ok&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="post-upload">
+<h3>POST /upload<a class="headerlink" href="#post-upload" title="Link to this heading">¶</a></h3>
+<p>Upload a dataset file (.pkl format).</p>
+<p><strong>Request:</strong></p>
+<ul class="simple">
+<li><p>Content-Type: <code class="docutils literal notranslate"><span class="pre">multipart/form-data</span></code></p></li>
+<li><p>Field: <code class="docutils literal notranslate"><span class="pre">file</span></code> (File)</p></li>
+</ul>
+<p><strong>Response:</strong></p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;filename&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;coursework_dataset.pkl&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;samples&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5000</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;features&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="post-train">
+<h3>POST /train<a class="headerlink" href="#post-train" title="Link to this heading">¶</a></h3>
+<p>Train the model.</p>
+<p><strong>Request Body:</strong></p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;hidden_layers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">256</span><span class="p">,</span><span class="w"> </span><span class="mi">128</span><span class="p">,</span><span class="w"> </span><span class="mi">64</span><span class="p">,</span><span class="w"> </span><span class="mi">32</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;learning_rate&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.005</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;max_epochs&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">200</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><strong>Response:</strong></p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;training_complete&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;metrics&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;training_time&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">12.58</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;test_rmse&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.024635</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;test_r2&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.9946</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;training_samples&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">3500</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;test_samples&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1000</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="post-predict">
+<h3>POST /predict<a class="headerlink" href="#post-predict" title="Link to this heading">¶</a></h3>
+<p>Make a prediction.</p>
+<p><strong>Request Body:</strong></p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;inputs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="p">,</span><span class="w"> </span><span class="mf">3.0</span><span class="p">,</span><span class="w"> </span><span class="mf">4.0</span><span class="p">,</span><span class="w"> </span><span class="mf">5.0</span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><strong>Response:</strong></p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;prediction&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">42.15</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;inputs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="p">,</span><span class="w"> </span><span class="mf">3.0</span><span class="p">,</span><span class="w"> </span><span class="mf">4.0</span><span class="p">,</span><span class="w"> </span><span class="mf">5.0</span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="error-responses">
+<h2>Error Responses<a class="headerlink" href="#error-responses" title="Link to this heading">¶</a></h2>
+<p>All endpoints return standard HTTP status codes:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">200</span> <span class="pre">OK</span></code>: Success</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">400</span> <span class="pre">Bad</span> <span class="pre">Request</span></code>: Invalid input</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">500</span> <span class="pre">Internal</span> <span class="pre">Server</span> <span class="pre">Error</span></code>: Server error</p></li>
+</ul>
+<p>Example error response:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;detail&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;No dataset loaded. Upload first.&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">5D Interpolator</a></h1>
+
+
+
+<p class="blurb">Neural network interpolator for 5D data</p>
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage Guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="data.html">Data Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="model.html">Model Module</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">REST API Endpoints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#core-modules">Core Modules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#quick-reference">Quick Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../testing.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../performance.html">Performance and Profiling</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">API Reference</a><ul>
+      <li>Previous: <a href="model.html" title="previous chapter">Model Module</a></li>
+      <li>Next: <a href="../testing.html" title="next chapter">Test Suite</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, C1 Coursework.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../_sources/api/endpoints.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

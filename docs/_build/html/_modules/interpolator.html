@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>interpolator &#8212; 5D Interpolator 1.0.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=12dfc556" />
+    <script src="../_static/documentation_options.js?v=8d563738"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for interpolator</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">5D Neural Network Interpolator (PyTorch)</span>
+
+<span class="sd">Core module for training and using a neural network to interpolate 5D data.</span>
+<span class="sd">Includes normalization, batch processing, LR scheduling, and early stopping.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.optim</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">optim</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">TensorDataset</span><span class="p">,</span> <span class="n">DataLoader</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">List</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+
+
+
+<div class="viewcode-block" id="Normalstats">
+<a class="viewcode-back" href="../api/model.html#interpolator.Normalstats">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Normalstats</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Statistics for input/output normalization&quot;&quot;&quot;</span>
+    <span class="n">x_mean</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">x_std</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">y_mean</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">y_std</span><span class="p">:</span> <span class="nb">float</span></div>
+
+
+
+<div class="viewcode-block" id="MLP">
+<a class="viewcode-back" href="../api/model.html#interpolator.MLP">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MLP</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Multi-Layer Perceptron for 5D interpolation&quot;&quot;&quot;</span>
+    
+<div class="viewcode-block" id="MLP.__init__">
+<a class="viewcode-back" href="../api/model.html#interpolator.MLP.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_dim</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">hidden_layers</span><span class="o">=</span><span class="p">[</span><span class="mi">128</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">32</span><span class="p">],</span> <span class="n">out_dim</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="n">layers</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">prev_dim</span> <span class="o">=</span> <span class="n">in_dim</span>
+        
+        <span class="k">for</span> <span class="n">hidden_dim</span> <span class="ow">in</span> <span class="n">hidden_layers</span><span class="p">:</span>
+            <span class="n">layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">prev_dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">))</span>
+            <span class="n">layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">())</span>
+            <span class="n">prev_dim</span> <span class="o">=</span> <span class="n">hidden_dim</span>
+        
+        <span class="n">layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">prev_dim</span><span class="p">,</span> <span class="n">out_dim</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">net</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="o">*</span><span class="n">layers</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="MLP.forward">
+<a class="viewcode-back" href="../api/model.html#interpolator.MLP.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">net</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ModelHandler">
+<a class="viewcode-back" href="../api/model.html#interpolator.ModelHandler">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ModelHandler</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Handler for PyTorch neural network model with advanced training features&quot;&quot;&quot;</span>
+    
+<div class="viewcode-block" id="ModelHandler.__init__">
+<a class="viewcode-back" href="../api/model.html#interpolator.ModelHandler.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hidden_layers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">256</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">32</span><span class="p">],</span>  <span class="c1"># Optimal from tuning</span>
+                 <span class="n">learning_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">5e-3</span><span class="p">,</span>  <span class="c1"># Increased from 0.001</span>
+                 <span class="n">max_epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>  <span class="c1"># Back to 200 like reference</span>
+                 <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">256</span><span class="p">,</span>  <span class="c1"># NEW: batch processing</span>
+                 <span class="n">weight_decay</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">):</span>  <span class="c1"># NEW: L2 regularization</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hidden_layers</span> <span class="o">=</span> <span class="n">hidden_layers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span> <span class="o">=</span> <span class="n">learning_rate</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_epochs</span> <span class="o">=</span> <span class="n">max_epochs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weight_decay</span> <span class="o">=</span> <span class="n">weight_decay</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s1">&#39;cuda&#39;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s1">&#39;cpu&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+
+
+<div class="viewcode-block" id="ModelHandler.fit">
+<a class="viewcode-back" href="../api/model.html#interpolator.ModelHandler.fit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> 
+            <span class="n">epoch_callback</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">X_val</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">y_val</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Train the model with batch processing, LR scheduling, and early stopping.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            X: Training features (N, 5)</span>
+<span class="sd">            y: Training targets (N,)</span>
+<span class="sd">            verbose: Print progress</span>
+<span class="sd">            epoch_callback: Callback(epoch, train_loss, val_loss, lr)</span>
+<span class="sd">            X_val: Validation features</span>
+<span class="sd">            y_val: Validation targets</span>
+<span class="sd">        </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: Training results with losses and timing</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+        
+        <span class="c1"># Initialize model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">MLP</span><span class="p">(</span><span class="n">in_dim</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">hidden_layers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hidden_layers</span><span class="p">,</span> <span class="n">out_dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        
+        <span class="c1"># Convert to tensors</span>
+        <span class="n">X_train</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">y_train</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">y</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        
+        <span class="c1"># Create DataLoader for batch processing</span>
+        <span class="n">train_dataset</span> <span class="o">=</span> <span class="n">TensorDataset</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+        <span class="n">train_loader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span>
+            <span class="n">train_dataset</span><span class="p">,</span> 
+            <span class="n">batch_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> 
+            <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># Shuffle for better generalization</span>
+            <span class="n">drop_last</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
+        
+        <span class="c1"># Validation data</span>
+        <span class="k">if</span> <span class="n">X_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">X_val_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">X_val</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">y_val_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">y_val</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        
+        <span class="c1"># Optimizer with weight decay (L2 regularization)</span>
+        <span class="n">optimizer</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> 
+            <span class="n">lr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span><span class="p">,</span>
+            <span class="n">weight_decay</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">weight_decay</span>
+        <span class="p">)</span>
+        
+        <span class="c1"># Learning rate scheduler (Cosine Annealing)</span>
+        <span class="n">scheduler</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">lr_scheduler</span><span class="o">.</span><span class="n">CosineAnnealingLR</span><span class="p">(</span>
+            <span class="n">optimizer</span><span class="p">,</span> 
+            <span class="n">T_max</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">max_epochs</span>
+        <span class="p">)</span>
+        
+        <span class="n">criterion</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">MSELoss</span><span class="p">()</span>
+        
+        <span class="c1"># Training loop with early stopping</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">losses</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">best_val_loss</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;inf&#39;</span><span class="p">)</span>
+        <span class="n">patience_counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">patience</span> <span class="o">=</span> <span class="mi">20</span>  <span class="c1"># Reference uses 20</span>
+        
+        <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_epochs</span><span class="p">):</span>
+            <span class="c1"># Training phase</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+            <span class="n">epoch_loss</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="n">num_batches</span> <span class="o">=</span> <span class="mi">0</span>
+            
+            <span class="k">for</span> <span class="n">batch_X</span><span class="p">,</span> <span class="n">batch_y</span> <span class="ow">in</span> <span class="n">train_loader</span><span class="p">:</span>
+                <span class="n">batch_X</span> <span class="o">=</span> <span class="n">batch_X</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+                <span class="n">batch_y</span> <span class="o">=</span> <span class="n">batch_y</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+                
+                <span class="c1"># Forward pass</span>
+                <span class="n">predictions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">batch_X</span><span class="p">)</span>
+                <span class="n">loss</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">batch_y</span><span class="p">)</span>
+                
+                <span class="c1"># Backward pass</span>
+                <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+                <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+                <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+                
+                <span class="n">epoch_loss</span> <span class="o">+=</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+                <span class="n">num_batches</span> <span class="o">+=</span> <span class="mi">1</span>
+            
+            <span class="c1"># Average loss for epoch</span>
+            <span class="n">avg_train_loss</span> <span class="o">=</span> <span class="n">epoch_loss</span> <span class="o">/</span> <span class="n">num_batches</span>
+            <span class="n">losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">avg_train_loss</span><span class="p">)</span>
+            
+            <span class="c1"># Validation phase</span>
+            <span class="n">val_loss</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">X_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+                <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+                    <span class="n">val_pred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">X_val_tensor</span><span class="p">)</span>
+                    <span class="n">val_loss</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">val_pred</span><span class="p">,</span> <span class="n">y_val_tensor</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+                
+                <span class="c1"># Early stopping based on validation loss</span>
+                <span class="k">if</span> <span class="n">val_loss</span> <span class="o">&lt;</span> <span class="n">best_val_loss</span><span class="p">:</span>
+                    <span class="n">best_val_loss</span> <span class="o">=</span> <span class="n">val_loss</span>
+                    <span class="n">patience_counter</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">patience_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+                
+                <span class="k">if</span> <span class="n">patience_counter</span> <span class="o">&gt;=</span> <span class="n">patience</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Early stopping at epoch </span><span class="si">{</span><span class="n">epoch</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="k">break</span>
+            
+            <span class="c1"># Step the learning rate scheduler</span>
+            <span class="n">scheduler</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+            <span class="n">current_lr</span> <span class="o">=</span> <span class="n">scheduler</span><span class="o">.</span><span class="n">get_last_lr</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+            
+            <span class="c1"># Callback for progress updates</span>
+            <span class="k">if</span> <span class="n">epoch_callback</span><span class="p">:</span>
+                <span class="n">epoch_callback</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">avg_train_loss</span><span class="p">,</span> <span class="n">val_loss</span><span class="p">,</span> <span class="n">current_lr</span><span class="p">)</span>
+            
+            <span class="c1"># Print progress</span>
+            <span class="k">if</span> <span class="n">verbose</span> <span class="ow">and</span> <span class="p">(</span><span class="n">epoch</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">val_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;, Val Loss: </span><span class="si">{</span><span class="n">val_loss</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">val_loss</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Epoch </span><span class="si">{</span><span class="n">epoch</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">max_epochs</span><span class="si">}</span><span class="s2">, Train Loss: </span><span class="si">{</span><span class="n">avg_train_loss</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}{</span><span class="n">val_str</span><span class="si">}</span><span class="s2">, LR: </span><span class="si">{</span><span class="n">current_lr</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+        <span class="n">training_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+        
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Training completed in </span><span class="si">{</span><span class="n">training_time</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Final loss: </span><span class="si">{</span><span class="n">losses</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;losses&quot;</span><span class="p">:</span> <span class="n">losses</span><span class="p">,</span>
+            <span class="s2">&quot;training_time&quot;</span><span class="p">:</span> <span class="n">training_time</span>
+        <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="ModelHandler.predict">
+<a class="viewcode-back" href="../api/model.html#interpolator.ModelHandler.predict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Predict using trained model&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Model not trained.&quot;</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="n">X_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">predictions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">X_tensor</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">predictions</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span></div>
+
+    
+<div class="viewcode-block" id="ModelHandler.save_model">
+<a class="viewcode-back" href="../api/model.html#interpolator.ModelHandler.save_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Save model to file&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No model to save.&quot;</span><span class="p">)</span>
+        
+        <span class="n">model_data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;state_dict&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">(),</span>
+            <span class="s1">&#39;hidden_layers&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_layers</span><span class="p">,</span>
+            <span class="s1">&#39;learning_rate&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span><span class="p">,</span>
+            <span class="s1">&#39;max_epochs&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_epochs</span><span class="p">,</span>
+            <span class="s1">&#39;stats&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span>
+        <span class="p">}</span>
+        
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span> <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span> <span class="k">else</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">model_data</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="ModelHandler.load_model">
+<a class="viewcode-back" href="../api/model.html#interpolator.ModelHandler.load_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load model from file&quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">model_data</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">hidden_layers</span> <span class="o">=</span> <span class="n">model_data</span><span class="p">[</span><span class="s1">&#39;hidden_layers&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span> <span class="o">=</span> <span class="n">model_data</span><span class="p">[</span><span class="s1">&#39;learning_rate&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_epochs</span> <span class="o">=</span> <span class="n">model_data</span><span class="p">[</span><span class="s1">&#39;max_epochs&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span> <span class="o">=</span> <span class="n">model_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;stats&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">MLP</span><span class="p">(</span><span class="n">in_dim</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">hidden_layers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hidden_layers</span><span class="p">,</span> <span class="n">out_dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">model_data</span><span class="p">[</span><span class="s1">&#39;state_dict&#39;</span><span class="p">])</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="apply_x_norm">
+<a class="viewcode-back" href="../api/model.html#interpolator.apply_x_norm">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">apply_x_norm</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">Normalstats</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply X normalization&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">X</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">stats</span><span class="o">.</span><span class="n">x_mean</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">stats</span><span class="o">.</span><span class="n">x_std</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-12</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="apply_y_norm">
+<a class="viewcode-back" href="../api/model.html#interpolator.apply_y_norm">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">apply_y_norm</span><span class="p">(</span><span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">Normalstats</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply y normalization&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">stats</span><span class="o">.</span><span class="n">y_mean</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">stats</span><span class="o">.</span><span class="n">y_std</span> <span class="o">+</span> <span class="mf">1e-12</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="invert_y_norm">
+<a class="viewcode-back" href="../api/model.html#interpolator.invert_y_norm">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">invert_y_norm</span><span class="p">(</span><span class="n">y_norm</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">Normalstats</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Invert y normalization&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">y_norm</span> <span class="o">*</span> <span class="p">(</span><span class="n">stats</span><span class="o">.</span><span class="n">y_std</span> <span class="o">+</span> <span class="mf">1e-12</span><span class="p">)</span> <span class="o">+</span> <span class="n">stats</span><span class="o">.</span><span class="n">y_mean</span></div>
+
+
+<div class="viewcode-block" id="compute_norm_stats">
+<a class="viewcode-back" href="../api/model.html#interpolator.compute_norm_stats">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_norm_stats</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Normalstats</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute normalization statistics from data&quot;&quot;&quot;</span>
+    <span class="n">x_mean</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">x_std</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-12</span>
+    <span class="n">y_mean</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">y_std</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">std</span><span class="p">()</span> <span class="o">+</span> <span class="mf">1e-12</span>
+    <span class="k">return</span> <span class="n">Normalstats</span><span class="p">(</span><span class="n">x_mean</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">x_std</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="nb">float</span><span class="p">(</span><span class="n">y_mean</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">y_std</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="interpolate">
+<a class="viewcode-back" href="../api/model.html#interpolator.interpolate">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">interpolate</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelHandler</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">Normalstats</span><span class="p">,</span> <span class="n">X_new</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Interpolate for new inputs using trained model and normalization stats.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        model: Trained ModelHandler</span>
+<span class="sd">        stats: Normalization statistics</span>
+<span class="sd">        X_new: New inputs to interpolate (N, 5)</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Predictions in original scale</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Normalize input</span>
+    <span class="n">X_normalized</span> <span class="o">=</span> <span class="n">apply_x_norm</span><span class="p">(</span><span class="n">X_new</span><span class="p">,</span> <span class="n">stats</span><span class="p">)</span>
+    
+    <span class="c1"># Predict (normalized)</span>
+    <span class="n">y_normalized</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_normalized</span><span class="p">)</span>
+    
+    <span class="c1"># Denormalize output</span>
+    <span class="n">y_pred</span> <span class="o">=</span> <span class="n">invert_y_norm</span><span class="p">(</span><span class="n">y_normalized</span><span class="p">,</span> <span class="n">stats</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">y_pred</span></div>
+
+
+
+<div class="viewcode-block" id="generate_synthetic_pkl">
+<a class="viewcode-back" href="../api/model.html#interpolator.generate_synthetic_pkl">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_synthetic_pkl</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">123</span><span class="p">,</span> <span class="n">workdir</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s2">&quot;synthetic_5d_data.pkl&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate synthetic 5D data and save to pickle file.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        n: Number of data points</span>
+<span class="sd">        seed: Random seed for reproducibility</span>
+<span class="sd">        workdir: Directory to save file</span>
+<span class="sd">        filename: Output filename</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Path to saved pickle file</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    
+    <span class="c1"># Generate 5D inputs uniformly in [0, 1]</span>
+    <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+    
+    <span class="c1"># Generate target with some nonlinear function</span>
+    <span class="c1"># Example: y = sum of squared inputs + noise</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">X</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">X</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> 
+         <span class="n">X</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">X</span><span class="p">[:,</span> <span class="mi">4</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> 
+         <span class="mf">0.1</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+    
+    <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;X&#39;</span><span class="p">:</span> <span class="n">X</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">y</span><span class="p">}</span>
+    
+    <span class="n">filepath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">workdir</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">workdir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># Create directory if needed</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Generated </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> synthetic samples → </span><span class="si">{</span><span class="n">filepath</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">filepath</span></div>
+
+
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+    
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;5D Neural Network Interpolator&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--mode&quot;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;generate&quot;</span><span class="p">,</span> <span class="s2">&quot;test&quot;</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;test&quot;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Mode: generate synthetic data or test model&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--n&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Number of data points to generate&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--workdir&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Working directory for output files&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--filename&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;synthetic_5d_data.pkl&quot;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Output filename for generated data&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--seed&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">123</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Random seed for reproducibility&quot;</span><span class="p">)</span>
+    
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+    
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;generate&quot;</span><span class="p">:</span>
+        <span class="c1"># Generate synthetic test data</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Generating </span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">n</span><span class="si">}</span><span class="s2"> synthetic 5D data points...&quot;</span><span class="p">)</span>
+        <span class="n">pkl_path</span> <span class="o">=</span> <span class="n">generate_synthetic_pkl</span><span class="p">(</span>
+            <span class="n">n</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">n</span><span class="p">,</span>
+            <span class="n">seed</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">seed</span><span class="p">,</span>
+            <span class="n">workdir</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">workdir</span><span class="p">,</span>
+            <span class="n">filename</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">filename</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✓ Data saved to: </span><span class="si">{</span><span class="n">pkl_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    
+    <span class="k">elif</span> <span class="n">args</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;test&quot;</span><span class="p">:</span>
+        <span class="c1"># Quick test mode with full-size dataset (5000 samples like production)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Running quick model test...&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">1. Generating synthetic data (5000 samples)...&quot;</span><span class="p">)</span>
+        <span class="n">pkl_path</span> <span class="o">=</span> <span class="n">generate_synthetic_pkl</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">5000</span><span class="p">)</span>
+
+        
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">2. Testing model training...&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">pkl_path</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        
+        <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;X&#39;</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span>
+        
+        <span class="c1"># Simple train-test split</span>
+        <span class="n">split_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">0.8</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
+        <span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span> <span class="o">=</span> <span class="n">X</span><span class="p">[:</span><span class="n">split_idx</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="n">split_idx</span><span class="p">:]</span>
+        <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">y</span><span class="p">[:</span><span class="n">split_idx</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">split_idx</span><span class="p">:]</span>
+        
+        <span class="c1"># Normalize</span>
+        <span class="n">x_mean</span><span class="p">,</span> <span class="n">x_std</span> <span class="o">=</span> <span class="n">X_train</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">X_train</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">y_mean</span><span class="p">,</span> <span class="n">y_std</span> <span class="o">=</span> <span class="n">y_train</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">y_train</span><span class="o">.</span><span class="n">std</span><span class="p">()</span>
+        <span class="n">stats</span> <span class="o">=</span> <span class="n">Normalstats</span><span class="p">(</span><span class="n">x_mean</span><span class="p">,</span> <span class="n">x_std</span><span class="p">,</span> <span class="n">y_mean</span><span class="p">,</span> <span class="n">y_std</span><span class="p">)</span>
+        
+        <span class="n">X_train_norm</span> <span class="o">=</span> <span class="p">(</span><span class="n">X_train</span> <span class="o">-</span> <span class="n">x_mean</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">x_std</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span>
+        <span class="n">y_train_norm</span> <span class="o">=</span> <span class="p">(</span><span class="n">y_train</span> <span class="o">-</span> <span class="n">y_mean</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">y_std</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span>
+        
+        <span class="c1"># Train</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">3. Training model...&quot;</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">ModelHandler</span><span class="p">()</span>  <span class="c1"># Use default 500 epochs</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">stats</span> <span class="o">=</span> <span class="n">stats</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train_norm</span><span class="p">,</span> <span class="n">y_train_norm</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># Enable progress display</span>
+
+        
+        <span class="c1"># Test</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">4. Evaluating...&quot;</span><span class="p">)</span>
+        <span class="n">y_pred</span> <span class="o">=</span> <span class="n">interpolate</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">stats</span><span class="p">,</span> <span class="n">X_test</span><span class="p">)</span>
+        <span class="n">mse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">y_pred</span> <span class="o">-</span> <span class="n">y_test</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">rmse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">mse</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Test MSE: </span><span class="si">{</span><span class="n">mse</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Test RMSE: </span><span class="si">{</span><span class="n">rmse</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">✓ Model test passed!&quot;</span><span class="p">)</span>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">5D Interpolator</a></h1>
+
+
+
+<p class="blurb">Neural network interpolator for 5D data</p>
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../performance.html">Performance and Profiling</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, C1 Coursework.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

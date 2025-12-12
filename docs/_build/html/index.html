@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Welcome to 5D Interpolator Documentation &#8212; 5D Interpolator 1.0.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
+    <script src="_static/documentation_options.js?v=8d563738"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Installation" href="installation.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="welcome-to-5d-interpolator-documentation">
+<h1>Welcome to 5D Interpolator Documentation<a class="headerlink" href="#welcome-to-5d-interpolator-documentation" title="Link to this heading">¶</a></h1>
+<p>A PyTorch-based neural network for interpolating 5-dimensional data with FastAPI backend and Next.js frontend.</p>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#docker-deployment">Docker Deployment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#id1">Local Development</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#verification">Verification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#common-issues">Common Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#using-docker-fastest">Using Docker (Fastest)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#expected-results">Expected Results</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#using-python-directly">Using Python Directly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#upload-dataset">Upload Dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#training">Training</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#making-predictions">Making Predictions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#performance-benchmarking">Performance Benchmarking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#hyperparameter-tuning">Hyperparameter Tuning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#docker-management">Docker Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#common-workflows">Common Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#troubleshooting">Troubleshooting</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/index.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/data.html">Data Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/model.html">Model Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/endpoints.html">REST API Endpoints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/index.html#core-modules">Core Modules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/index.html#quick-reference">Quick Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="testing.html">Test Suite</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="testing.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html#test-structure">Test Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html#running-tests">Running Tests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html#test-descriptions">Test Descriptions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html#test-coverage">Test Coverage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html#writing-new-tests">Writing New Tests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html#continuous-integration">Continuous Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html#benchmarking-vs-testing">Benchmarking vs Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html#debugging-failed-tests">Debugging Failed Tests</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="performance.html">Performance and Profiling</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#executive-summary">Executive Summary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#benchmark-methodology">Benchmark Methodology</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#results">Results</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#scaling-analysis">Scaling Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#performance-bottlenecks">Performance Bottlenecks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#optimization-opportunities">Optimization Opportunities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#profiling-details">Profiling Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#system-specifications">System Specifications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#comparative-performance">Comparative Performance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#reproducibility">Reproducibility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#key-findings">Key Findings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#recommendations">Recommendations</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<section id="quick-links">
+<h2>Quick Links<a class="headerlink" href="#quick-links" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
+<p>This project implements a neural network interpolator for 5D input data, achieving:</p>
+<ul class="simple">
+<li><p><strong>Test RMSE:</strong> 0.024635</p></li>
+<li><p><strong>R² Score:</strong> 0.9946</p></li>
+<li><p><strong>Architecture:</strong> [256, 128, 64, 32] neurons</p></li>
+<li><p><strong>Training Time:</strong> &lt; 1 second for 5000 samples</p></li>
+</ul>
+</section>
+<section id="features">
+<h2>Features<a class="headerlink" href="#features" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>PyTorch-based MLP model with advanced training techniques</p></li>
+<li><p>FastAPI REST API backend</p></li>
+<li><p>Next.js frontend for data upload, training, and prediction</p></li>
+<li><p>Docker deployment with docker-compose</p></li>
+<li><p>Comprehensive performance benchmarking</p></li>
+</ul>
+</section>
+<section id="system-requirements">
+<h2>System Requirements<a class="headerlink" href="#system-requirements" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Python 3.9+</p></li>
+<li><p>Node.js 20+</p></li>
+<li><p>Docker &amp; Docker Compose (for deployment)</p></li>
+<li><p>8GB+ RAM recommended</p></li>
+</ul>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">5D Interpolator</a></h1>
+
+
+
+<p class="blurb">Neural network interpolator for 5D data</p>
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="performance.html">Performance and Profiling</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="installation.html" title="next chapter">Installation</a></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, C1 Coursework.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

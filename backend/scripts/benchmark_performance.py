@@ -165,9 +165,10 @@ def main():
     print(f"  RAM: {sys_info['total_ram_gb']} GB")
     print(f"  Python: {sys_info['python_version']}")
     
-    # Test different dataset sizes
-    dataset_sizes = [500, 1000, 2000, 3500, 5000]
+    # Test different dataset sizes (including 10K as per requirement 8)
+    dataset_sizes = [500, 1000, 2000, 3500, 5000, 10000]
     n_runs = 5  # Number of runs per size for statistical reliability
+
     
     print(f"\nTesting {len(dataset_sizes)} dataset sizes with {n_runs} runs each")
     print("This will take approximately 10-15 minutes...\n")

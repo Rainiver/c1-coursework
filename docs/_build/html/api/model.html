@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Model Module &#8212; 5D Interpolator 1.0.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=12dfc556" />
+    <script src="../_static/documentation_options.js?v=8d563738"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="REST API Endpoints" href="endpoints.html" />
+    <link rel="prev" title="Data Module" href="data.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="model-module">
+<h1>Model Module<a class="headerlink" href="#model-module" title="Link to this heading">¶</a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">interpolator</span></code> module contains the neural network implementation.</p>
+<p id="module-interpolator">5D Neural Network Interpolator (PyTorch)</p>
+<p>Core module for training and using a neural network to interpolate 5D data.
+Includes normalization, batch processing, LR scheduling, and early stopping.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="interpolator.MLP">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">interpolator.</span></span><span class="sig-name descname"><span class="pre">MLP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[128,</span> <span class="pre">64,</span> <span class="pre">32]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/interpolator.html#MLP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#interpolator.MLP" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Multi-Layer Perceptron for 5D interpolation</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="interpolator.MLP.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/interpolator.html#MLP.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#interpolator.MLP.forward" title="Link to this definition">¶</a></dt>
+<dd><p>Define the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="interpolator.ModelHandler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">interpolator.</span></span><span class="sig-name descname"><span class="pre">ModelHandler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hidden_layers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[256,</span> <span class="pre">128,</span> <span class="pre">64,</span> <span class="pre">32]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">learning_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.005</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_epochs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_decay</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/interpolator.html#ModelHandler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#interpolator.ModelHandler" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Handler for PyTorch neural network model with advanced training features</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="interpolator.ModelHandler.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epoch_callback</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_val</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_val</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/interpolator.html#ModelHandler.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#interpolator.ModelHandler.fit" title="Link to this definition">¶</a></dt>
+<dd><p>Train the model with batch processing, LR scheduling, and early stopping.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> – Training features (N, 5)</p></li>
+<li><p><strong>y</strong> – Training targets (N,)</p></li>
+<li><p><strong>verbose</strong> – Print progress</p></li>
+<li><p><strong>epoch_callback</strong> – Callback(epoch, train_loss, val_loss, lr)</p></li>
+<li><p><strong>X_val</strong> – Validation features</p></li>
+<li><p><strong>y_val</strong> – Validation targets</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Training results with losses and timing</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="interpolator.ModelHandler.load_model">
+<span class="sig-name descname"><span class="pre">load_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/interpolator.html#ModelHandler.load_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#interpolator.ModelHandler.load_model" title="Link to this definition">¶</a></dt>
+<dd><p>Load model from file</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="interpolator.ModelHandler.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/interpolator.html#ModelHandler.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#interpolator.ModelHandler.predict" title="Link to this definition">¶</a></dt>
+<dd><p>Predict using trained model</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="interpolator.ModelHandler.save_model">
+<span class="sig-name descname"><span class="pre">save_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/interpolator.html#ModelHandler.save_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#interpolator.ModelHandler.save_model" title="Link to this definition">¶</a></dt>
+<dd><p>Save model to file</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="interpolator.Normalstats">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">interpolator.</span></span><span class="sig-name descname"><span class="pre">Normalstats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_mean</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_std</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_mean</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_std</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/interpolator.html#Normalstats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#interpolator.Normalstats" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Statistics for input/output normalization</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="interpolator.Normalstats.x_mean">
+<span class="sig-name descname"><span class="pre">x_mean</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#interpolator.Normalstats.x_mean" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="interpolator.Normalstats.x_std">
+<span class="sig-name descname"><span class="pre">x_std</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#interpolator.Normalstats.x_std" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="interpolator.Normalstats.y_mean">
+<span class="sig-name descname"><span class="pre">y_mean</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#interpolator.Normalstats.y_mean" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="interpolator.Normalstats.y_std">
+<span class="sig-name descname"><span class="pre">y_std</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#interpolator.Normalstats.y_std" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="interpolator.apply_x_norm">
+<span class="sig-prename descclassname"><span class="pre">interpolator.</span></span><span class="sig-name descname"><span class="pre">apply_x_norm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stats</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#interpolator.Normalstats" title="interpolator.Normalstats"><span class="pre">Normalstats</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/interpolator.html#apply_x_norm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#interpolator.apply_x_norm" title="Link to this definition">¶</a></dt>
+<dd><p>Apply X normalization</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="interpolator.apply_y_norm">
+<span class="sig-prename descclassname"><span class="pre">interpolator.</span></span><span class="sig-name descname"><span class="pre">apply_y_norm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stats</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#interpolator.Normalstats" title="interpolator.Normalstats"><span class="pre">Normalstats</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/interpolator.html#apply_y_norm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#interpolator.apply_y_norm" title="Link to this definition">¶</a></dt>
+<dd><p>Apply y normalization</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="interpolator.compute_norm_stats">
+<span class="sig-prename descclassname"><span class="pre">interpolator.</span></span><span class="sig-name descname"><span class="pre">compute_norm_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#interpolator.Normalstats" title="interpolator.Normalstats"><span class="pre">Normalstats</span></a></span></span><a class="reference internal" href="../_modules/interpolator.html#compute_norm_stats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#interpolator.compute_norm_stats" title="Link to this definition">¶</a></dt>
+<dd><p>Compute normalization statistics from data</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="interpolator.generate_synthetic_pkl">
+<span class="sig-prename descclassname"><span class="pre">interpolator.</span></span><span class="sig-name descname"><span class="pre">generate_synthetic_pkl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">123</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workdir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'synthetic_5d_data.pkl'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/interpolator.html#generate_synthetic_pkl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#interpolator.generate_synthetic_pkl" title="Link to this definition">¶</a></dt>
+<dd><p>Generate synthetic 5D data and save to pickle file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> – Number of data points</p></li>
+<li><p><strong>seed</strong> – Random seed for reproducibility</p></li>
+<li><p><strong>workdir</strong> – Directory to save file</p></li>
+<li><p><strong>filename</strong> – Output filename</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Path to saved pickle file</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="interpolator.interpolate">
+<span class="sig-prename descclassname"><span class="pre">interpolator.</span></span><span class="sig-name descname"><span class="pre">interpolate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#id0" title="interpolator.ModelHandler"><span class="pre">ModelHandler</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">stats</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#interpolator.Normalstats" title="interpolator.Normalstats"><span class="pre">Normalstats</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_new</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/interpolator.html#interpolate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#interpolator.interpolate" title="Link to this definition">¶</a></dt>
+<dd><p>Interpolate for new inputs using trained model and normalization stats.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> – Trained ModelHandler</p></li>
+<li><p><strong>stats</strong> – Normalization statistics</p></li>
+<li><p><strong>X_new</strong> – New inputs to interpolate (N, 5)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Predictions in original scale</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="interpolator.invert_y_norm">
+<span class="sig-prename descclassname"><span class="pre">interpolator.</span></span><span class="sig-name descname"><span class="pre">invert_y_norm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_norm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stats</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#interpolator.Normalstats" title="interpolator.Normalstats"><span class="pre">Normalstats</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/interpolator.html#invert_y_norm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#interpolator.invert_y_norm" title="Link to this definition">¶</a></dt>
+<dd><p>Invert y normalization</p>
+</dd></dl>
+
+<section id="modelhandler-class">
+<h2>ModelHandler Class<a class="headerlink" href="#modelhandler-class" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="id0">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">interpolator.</span></span><span class="sig-name descname"><span class="pre">ModelHandler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hidden_layers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[256,</span> <span class="pre">128,</span> <span class="pre">64,</span> <span class="pre">32]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">learning_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.005</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_epochs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_decay</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/interpolator.html#ModelHandler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id0" title="Link to this definition">¶</a></dt>
+<dd><p>Handler for PyTorch neural network model with advanced training features</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="interpolator.ModelHandler.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hidden_layers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[256,</span> <span class="pre">128,</span> <span class="pre">64,</span> <span class="pre">32]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">learning_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.005</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_epochs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_decay</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/interpolator.html#ModelHandler.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#interpolator.ModelHandler.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id1">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epoch_callback</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_val</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_val</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/interpolator.html#ModelHandler.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id1" title="Link to this definition">¶</a></dt>
+<dd><p>Train the model with batch processing, LR scheduling, and early stopping.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> – Training features (N, 5)</p></li>
+<li><p><strong>y</strong> – Training targets (N,)</p></li>
+<li><p><strong>verbose</strong> – Print progress</p></li>
+<li><p><strong>epoch_callback</strong> – Callback(epoch, train_loss, val_loss, lr)</p></li>
+<li><p><strong>X_val</strong> – Validation features</p></li>
+<li><p><strong>y_val</strong> – Validation targets</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Training results with losses and timing</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id2">
+<span class="sig-name descname"><span class="pre">load_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/interpolator.html#ModelHandler.load_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id2" title="Link to this definition">¶</a></dt>
+<dd><p>Load model from file</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id3">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/interpolator.html#ModelHandler.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id3" title="Link to this definition">¶</a></dt>
+<dd><p>Predict using trained model</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id4">
+<span class="sig-name descname"><span class="pre">save_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/interpolator.html#ModelHandler.save_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id4" title="Link to this definition">¶</a></dt>
+<dd><p>Save model to file</p>
+</dd></dl>
+
+</dd></dl>
+
+<section id="constructor">
+<h3>Constructor<a class="headerlink" href="#constructor" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ModelHandler</span><span class="p">(</span>
+    <span class="n">hidden_layers</span><span class="o">=</span><span class="p">[</span><span class="mi">256</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">32</span><span class="p">],</span>
+    <span class="n">learning_rate</span><span class="o">=</span><span class="mf">5e-3</span><span class="p">,</span>
+    <span class="n">max_epochs</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+    <span class="n">weight_decay</span><span class="o">=</span><span class="mf">1e-6</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">hidden_layers</span></code> (List[int]): Network architecture (default: [256,128,64,32])</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">learning_rate</span></code> (float): Adam optimizer learning rate (default: 5e-3)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">max_epochs</span></code> (int): Maximum training epochs (default: 200)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">batch_size</span></code> (int): Training batch size (default: 256)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">weight_decay</span></code> (float): L2 regularization (default: 1e-6)</p></li>
+</ul>
+</section>
+<section id="methods">
+<h3>Methods<a class="headerlink" href="#methods" title="Link to this heading">¶</a></h3>
+<section id="fit-x-y-x-val-none-y-val-none-verbose-false">
+<h4>fit(X, y, X_val=None, y_val=None, verbose=False)<a class="headerlink" href="#fit-x-y-x-val-none-y-val-none-verbose-false" title="Link to this heading">¶</a></h4>
+<p>Train the model.</p>
+<p><strong>Parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">X</span></code> (np.ndarray): Training inputs (N×5)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">y</span></code> (np.ndarray): Training targets (N×1)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">X_val</span></code> (np.ndarray, optional): Validation inputs</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">y_val</span></code> (np.ndarray, optional): Validation targets</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">verbose</span></code> (bool): Print training progress</p></li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul class="simple">
+<li><p>dict: Training results including losses and timing</p></li>
+</ul>
+</section>
+<section id="predict-x">
+<h4>predict(X)<a class="headerlink" href="#predict-x" title="Link to this heading">¶</a></h4>
+<p>Make predictions.</p>
+<p><strong>Parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">X</span></code> (np.ndarray): Input data (N×5)</p></li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul class="simple">
+<li><p>np.ndarray: Predictions (N×1)</p></li>
+</ul>
+</section>
+</section>
+</section>
+<section id="mlp-class">
+<h2>MLP Class<a class="headerlink" href="#mlp-class" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="id5">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">interpolator.</span></span><span class="sig-name descname"><span class="pre">MLP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[128,</span> <span class="pre">64,</span> <span class="pre">32]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/interpolator.html#MLP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id5" title="Link to this definition">¶</a></dt>
+<dd><p>Multi-Layer Perceptron for 5D interpolation</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="interpolator.MLP.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[128,</span> <span class="pre">64,</span> <span class="pre">32]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/interpolator.html#MLP.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#interpolator.MLP.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Initialize internal Module state, shared by both nn.Module and ScriptModule.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id6">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/interpolator.html#MLP.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id6" title="Link to this definition">¶</a></dt>
+<dd><p>Define the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<p>PyTorch neural network implementation.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">5D Interpolator</a></h1>
+
+
+
+<p class="blurb">Neural network interpolator for 5D data</p>
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage Guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="data.html">Data Module</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Model Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="endpoints.html">REST API Endpoints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#core-modules">Core Modules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#quick-reference">Quick Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../testing.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../performance.html">Performance and Profiling</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">API Reference</a><ul>
+      <li>Previous: <a href="data.html" title="previous chapter">Data Module</a></li>
+      <li>Next: <a href="endpoints.html" title="next chapter">REST API Endpoints</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, C1 Coursework.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../_sources/api/model.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Data Module &#8212; 5D Interpolator 1.0.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=12dfc556" />
+    <script src="../_static/documentation_options.js?v=8d563738"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Model Module" href="model.html" />
+    <link rel="prev" title="API Reference" href="index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="data-module">
+<h1>Data Module<a class="headerlink" href="#data-module" title="Link to this heading">¶</a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">data</span></code> module handles dataset loading, preprocessing, and splitting.</p>
+<p id="module-data">Data handling utilities for 5D interpolator</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="data.DataHandler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">data.</span></span><span class="sig-name descname"><span class="pre">DataHandler</span></span><a class="reference internal" href="../_modules/data.html#DataHandler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#data.DataHandler" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Handler for loading and preprocessing 5D datasets</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="data.DataHandler.load_dataset">
+<span class="sig-name descname"><span class="pre">load_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/data.html#DataHandler.load_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#data.DataHandler.load_dataset" title="Link to this definition">¶</a></dt>
+<dd><p>Load dataset from pickle file</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="data.DataHandler.preprocess_and_split">
+<span class="sig-name descname"><span class="pre">preprocess_and_split</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.7</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/data.html#DataHandler.preprocess_and_split"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#data.DataHandler.preprocess_and_split" title="Link to this definition">¶</a></dt>
+<dd><p>Split data into train/val/test sets (70/10/20 or 3500/500/1000 for 5000 samples).
+Validation set is used for early stopping.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>(X_train, y_train), (X_val, y_val), (X_test, y_test)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<section id="datahandler-class">
+<h2>DataHandler Class<a class="headerlink" href="#datahandler-class" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="id0">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">data.</span></span><span class="sig-name descname"><span class="pre">DataHandler</span></span><a class="reference internal" href="../_modules/data.html#DataHandler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id0" title="Link to this definition">¶</a></dt>
+<dd><p>Handler for loading and preprocessing 5D datasets</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="data.DataHandler.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/data.html#DataHandler.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#data.DataHandler.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id1">
+<span class="sig-name descname"><span class="pre">load_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/data.html#DataHandler.load_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id1" title="Link to this definition">¶</a></dt>
+<dd><p>Load dataset from pickle file</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id2">
+<span class="sig-name descname"><span class="pre">preprocess_and_split</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.7</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/data.html#DataHandler.preprocess_and_split"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id2" title="Link to this definition">¶</a></dt>
+<dd><p>Split data into train/val/test sets (70/10/20 or 3500/500/1000 for 5000 samples).
+Validation set is used for early stopping.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>(X_train, y_train), (X_val, y_val), (X_test, y_test)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<section id="methods">
+<h3>Methods<a class="headerlink" href="#methods" title="Link to this heading">¶</a></h3>
+<section id="load-dataset-filepath">
+<h4>load_dataset(filepath)<a class="headerlink" href="#load-dataset-filepath" title="Link to this heading">¶</a></h4>
+<p>Load a .pkl dataset file.</p>
+<p><strong>Parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">filepath</span></code> (str): Path to .pkl file</p></li>
+</ul>
+<p><strong>Example:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">handler</span> <span class="o">=</span> <span class="n">DataHandler</span><span class="p">()</span>
+<span class="n">handler</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="s2">&quot;coursework_dataset.pkl&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="preprocess-and-split-train-ratio-0-7-val-ratio-0-1-test-ratio-0-2">
+<h4>preprocess_and_split(train_ratio=0.7, val_ratio=0.1, test_ratio=0.2)<a class="headerlink" href="#preprocess-and-split-train-ratio-0-7-val-ratio-0-1-test-ratio-0-2" title="Link to this heading">¶</a></h4>
+<p>Split data into train/validation/test sets.</p>
+<p><strong>Parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">train_ratio</span></code> (float): Training set proportion (default: 0.7)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">val_ratio</span></code> (float): Validation set proportion (default: 0.1)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_ratio</span></code> (float): Test set proportion (default: 0.2)</p></li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul class="simple">
+<li><p>Tuple of ((X_train, y_train), (X_val, y_val), (X_test, y_test))</p></li>
+</ul>
+<p><strong>Example:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">),</span> <span class="p">(</span><span class="n">X_val</span><span class="p">,</span> <span class="n">y_val</span><span class="p">),</span> <span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span> <span class="o">=</span> <span class="n">handler</span><span class="o">.</span><span class="n">preprocess_and_split</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Training samples: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># 3500 for 5000 total</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">5D Interpolator</a></h1>
+
+
+
+<p class="blurb">Neural network interpolator for 5D data</p>
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage Guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Data Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="model.html">Model Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="endpoints.html">REST API Endpoints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#core-modules">Core Modules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#quick-reference">Quick Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../testing.html">Test Suite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../performance.html">Performance and Profiling</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">API Reference</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">API Reference</a></li>
+      <li>Next: <a href="model.html" title="next chapter">Model Module</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, C1 Coursework.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../_sources/api/data.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
