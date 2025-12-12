@@ -110,13 +110,14 @@ def train_model(config: TrainConfig):
         raise HTTPException(status_code=400, detail="No dataset loaded. Upload first.")
     
     try:
-        # Initialize model with config
+        # Initialize model with config (using optimal hyperparameters from tuning)
         global model_handler
         model_handler = ModelHandler(
-            hidden_layers=config.hidden_layers if config.hidden_layers else [128, 64, 32],
+            hidden_layers=config.hidden_layers if config.hidden_layers else [256, 128, 64, 32],
             learning_rate=config.learning_rate,
             max_epochs=config.max_epochs
         )
+
         
         # Split into train/val/test (70/10/20)
         (X_train, y_train), (X_val, y_val), (X_test, y_test) = data_handler.preprocess_and_split()

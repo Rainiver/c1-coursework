@@ -1,0 +1,8 @@
+Best configuration found on 2025-12-12 00:18:21.453548
+Test RMSE: 0.024635
+
+hidden_layers = [256, 128, 64, 32]
+learning_rate = 0.005
+max_epochs = 200
+batch_size = 256
+weight_decay = 1e-06

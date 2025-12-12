@@ -50,7 +50,7 @@ class MLP(nn.Module):
 class ModelHandler:
     """Handler for PyTorch neural network model with advanced training features"""
     
-    def __init__(self, hidden_layers: List[int] = [128, 64, 32], 
+    def __init__(self, hidden_layers: List[int] = [256, 128, 64, 32],  # Optimal from tuning
                  learning_rate: float = 5e-3,  # Increased from 0.001
                  max_epochs: int = 200,  # Back to 200 like reference
                  batch_size: int = 256,  # NEW: batch processing
@@ -63,6 +63,7 @@ class ModelHandler:
         self.model = None
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.stats = None
+
 
 
 

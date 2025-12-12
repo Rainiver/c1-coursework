@@ -70,11 +70,12 @@ export default function InterpolatorPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          hidden_layers: [128, 64, 32],
+          hidden_layers: [256, 128, 64, 32],  // Optimal configuration from hyperparameter tuning
           learning_rate: 0.001,
           max_epochs: epochs,
         }),
       });
+
 
       clearInterval(progressInterval);
       setTrainingEpochProgress(100);
