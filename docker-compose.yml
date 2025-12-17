@@ -1,0 +1,48 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: interpolator-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persistent storage for models and data
+      - models_data:/app/models
+      - upload_data:/app/uploads
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - interpolator-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: interpolator-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:8000
+    restart: unless-stopped
+    networks:
+      - interpolator-network
+
+volumes:
+  models_data:
+    driver: local
+  upload_data:
+    driver: local
+
+networks:
+  interpolator-network:
+    name: interpolator_interpolator-network
+    driver: bridge
