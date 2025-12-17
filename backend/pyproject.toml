@@ -1,0 +1,23 @@
+[project]
+name = "interpolator"
+version = "0.1.0"
+description = "A comprehensive system for learning and serving 5D numerical datasets."
+authors = [
+    {name = "C1 Coursework", email = "student@cam.ac.uk"},
+]
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "numpy",
+    "scikit-learn",
+    "torch",
+    "python-multipart",
+]
+requires-python = ">=3.9"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["interpolator"]
