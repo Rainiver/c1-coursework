@@ -1,0 +1,12 @@
+image: python:3.9
+
+stages:
+  - test
+
+test_backend:
+  stage: test
+  script:
+    - cd backend
+    - pip install -e .
+    - pip install pytest httpx
+    - pytest tests
