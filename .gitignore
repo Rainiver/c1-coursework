@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+.env
+.DS_Store
+.venv/
+venv/
+env/
+.pytest_cache/
+docs/_build/
+backend/uploads/
+backend/models/
+*.egg-info/
+dist/
+coverage.xml
+.coverage
+performance_benchmark_results.json
